@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-import serial
+"""Simple class for encapsulating sending raw commands to an Arduino over
+a serial connection. Configurable via settings.py"""
 
-# Serial configuration
-SIGNATURE = 'Dog'
-FILENAME = '/dev/ttyACM0'
-BAUD = 115200
-TIMEOUT = 1  # seconds
+import serial
+from settings import FILENAME, BAUD, SIGNATURE, TIMEOUT
 
 
 class Utils:
@@ -33,7 +31,7 @@ class Arduino:
         self.com.write(output)
         
     def send_command(self, command_name, *args):
-        send_raw_command(' '.join((command_name,) + args))
+        self.send_raw_command(' '.join((command_name,) + args))
 
     def toggle_lights(self, number):
         self.send_command('togglelight', (number,))
