@@ -1,6 +1,6 @@
 ARDUINO_DIR  = /usr/share/arduino
 
-TARGET       = Blink
+TARGET       = RoomControl
 #ARDUINO_LIBS = Arduino 
 
 BOARD_TAG    = uno
