@@ -10,7 +10,7 @@ Developers
 
 Version
 -------
-0.1
+0.1a (we don't actually use version numbers yet)
 
 License
 -------
