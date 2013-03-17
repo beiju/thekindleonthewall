@@ -1,6 +1,5 @@
 #include "Arduino.h"
 #include "Debug.h"
-#include <stdarg.h>
 
 // Default: errors only
 void Debug::begin(int bitrate) {
@@ -13,11 +12,10 @@ void Debug::begin(int bitrate) {
   _enabled[ERROR] = true;
 }
 
-void Debug::printDebug(DebugType debugType, char* debugTypeStr, char* format, va_list args) {
+void Debug::printDebug(DebugType debugType, String debugTypeStr, String message, va_list args) {
   if (_enabled[debugType]) {
-    // message: "TYPE formatted_debug_message"
-    char* message = Utils::va_format(format, args);
-    
+    char* message = Utils::va_format(message, args);
+
     Serial.print(debugTypeStr);
     Serial.print(" ");
     Serial.println(message);

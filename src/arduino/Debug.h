@@ -4,6 +4,8 @@
 #include "Arduino.h"
 #include "_utils.cpp"
 
+#define s(arg) Utils::str_to_char(arg)
+
 class Debug {
   public:
     enum DebugType {
@@ -28,7 +30,7 @@ class Debug {
   
   private:
     boolean _enabled[4];
-    void printDebug(DebugType, char*, char*, va_list);
+    void printDebug(DebugType, String, String, va_list);
 };
 
 #endif
