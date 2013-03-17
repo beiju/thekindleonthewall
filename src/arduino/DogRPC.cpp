@@ -3,8 +3,6 @@
 #include "Debug.h"
 #include "DogRPC.h"
 
-DogRPC::DogRPC() {}
-
 void DogRPC::begin(String signature, int bitrate) {
   Debug debug;
   debug.begin(bitrate);
