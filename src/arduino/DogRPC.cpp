@@ -40,10 +40,10 @@ void DogRPC::registerCommand(char* cmd, void (*func)(String[])) {
   
   for (int i = 0; i < _numCmds-1; i++) { // _numCmds - 1 because it was just incremented
     _debug->debug("i = %d", i);
-    if (String(_commands[i].command).compareTo(cmd) < 0) {
+    if (strcmp(_commands[i].command, cmd) < 0) {
       newCmds[i] = _commands[i];
       _debug->debug("Copying command `%s` before new command `%s`", _commands[i].command, cmd);
-    } else if (String(_commands[i].command).compareTo(cmd) == 0) {
+    } else if (strcmp(_commands[i].command, cmd) == 0) {
       _debug->error("Command `%s` cannot be added because it already exists", cmd);
       return;
     } else {
@@ -64,7 +64,7 @@ void DogRPC::registerCommand(char* cmd, void (*func)(String[])) {
   _debug->info("Added command `%s`", cmd);
 }
 
-DogRPC::CmdCallback *DogRPC::findCommand(String cmd) {
+DogRPC::CmdCallback *DogRPC::findCommand(String cmdStr) {
   // Goal: Find the command efficiently by looking alphabetically
   // Logic: Set start and end to the start and end of the array. Then:
   //   1. Set index to the middle of the array (numerical average of start and end)
@@ -73,6 +73,7 @@ DogRPC::CmdCallback *DogRPC::findCommand(String cmd) {
   //   4. If the command of the index element is "less than" cmd, set end to index and repeat
   //   5. If the command of the index element is "greater than" cmd, set start to index and repeat
   
+  char* cmd = Utils::str_to_char(cmdStr);
   int start = 0;
   int end = _numCmds;
   int index = _numCmds / 2; // intentional integer divison
@@ -81,9 +82,9 @@ DogRPC::CmdCallback *DogRPC::findCommand(String cmd) {
     index = (start + end) / 2;
     if (start == end) {
       return NULL;
-    } else if (String(_commands[index].command).compareTo(cmd) == 0) {
+    } else if (strcmp(_commands[index].command, cmd) == 0) {
       return &_commands[index];
-    } else if (String(_commands[index].command).compareTo(cmd) == -1) {
+    } else if (strcmp(_commands[index].command, cmd) == -1) {
       end = index;
     } else {
       start = index;
@@ -106,7 +107,7 @@ void DogRPC::runCommand(String cmd, String args[]) {
     argsStr += args[i];
     if (args[i+1] != NULL) argsStr += "`, `";
   }
-  _debug->info("Running command: `%s` with args: `%s`.", cmd, argsStr);
+  _debug->info("Running command: `%s` with args: `%s`.", s(cmd), s(argsStr));
   
    findCommand(cmd)->function(args);
 }
@@ -121,7 +122,7 @@ void DogRPC::refresh() {
     if (character == '\r') {
       DogRPC::parseMessage();
     }
-    _debug->info("Message so far: %s", _message);
+    _debug->info("Message so far: %s", s(_message));
   }
   Serial.flush();
 }
@@ -130,7 +131,7 @@ void DogRPC::parseMessage() {
   _message.trim(); // get rid of starting and ending whitespace
   
   String signature = DogRPC::nextMessageToken();
-  _debug->info("Signature: `%s`", signature);
+  _debug->info("Signature: `%s`", s(signature));
   if (signature != _signature) {
     _message = "";
     _debug->error("Given signature (%s) did not match expected signature (%s).", signature, _signature);
@@ -148,7 +149,7 @@ void DogRPC::parseMessage() {
   String messageBody = _message;
   
   String command = DogRPC::nextMessageToken();
-  _debug->info("Command: `%s`", command);
+  _debug->info("Command: `%s`", s(command));
   
   // If the command was the last thing in the message, it's invalid (no checksum)
   if (_message == "") {
@@ -161,22 +162,22 @@ void DogRPC::parseMessage() {
   String args[argnum+1]; // +1 is for NULL as the last element
   
   for (int i = 0; i < argnum; i++) {
-    _debug->debug("Getting arg %d from message `%s`.", i, _message);
+    _debug->debug("Getting arg %d from message `%s`.", i, s(_message));
     args[i] = nextMessageToken();
     _debug->debug("arg %d: `%s`", i, args[i]);
   }
   args[argnum] = NULL;
   
   String checksum = _message; // The checksum should be all that's left of the message
-  _debug->info("Checksum: `%s`", checksum);
+  _debug->info("Checksum: `%s`", s(checksum));
   
   // Remove checksum from message body
   messageBody = messageBody.substring(0, messageBody.length() - checksum.length() - 1);
   String computedChecksum = String(createChecksum(messageBody));
-  _debug->info("Computed checksum: `%s` \t Computed on message: `%s`", computedChecksum, messageBody);
+  _debug->info("Computed checksum: `%s` \t Computed on message: `%s`", s(computedChecksum), s(messageBody));
   if (computedChecksum != checksum) {
     _message = "";
-    _debug->error("Given checksum (%S) did not match expected checksum (%s).", checksum, computedChecksum);
+    _debug->error("Given checksum (%s) did not match expected checksum (%s).", s(checksum), s(computedChecksum));
    return;
   }
   
@@ -189,7 +190,7 @@ String DogRPC::nextMessageToken() {
   String token = _message.substring(0, _message.indexOf(" "));
   _message = _message.substring(token.length());
   _message.trim();
-  _debug->info("Next token: `%s` \t New message: `%s`", token, _message);
+  _debug->info("Next token: `%s` \t New message: `%s`", s(token), s(_message));
   Serial.flush();
   return token;
 }
@@ -225,5 +226,5 @@ unsigned long DogRPC::createChecksum(String msg) {
 }
 
 void DogRPC::write(String message) {
-  Serial.print( Utils::format("%s %s %s", _signature, message, createChecksum(message)) );
+  Serial.print( Utils::format("%s %s %s", s(_signature), s(message), createChecksum(message)) );
 }

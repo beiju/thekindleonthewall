@@ -4,6 +4,8 @@
 #include "Arduino.h"
 #include "_utils.cpp"
 
+#define s(arg) Utils::str_to_char(arg)
+
 class Debug {
   public:
     enum DebugType {

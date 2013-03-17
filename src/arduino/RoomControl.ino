@@ -17,7 +17,6 @@ Debug debug;
 DogRPC raspi;
 Transciever lights;
 
-
 void setup() {
   pinMode(LEDPIN, OUTPUT);
   debug.begin(BITRATE);
