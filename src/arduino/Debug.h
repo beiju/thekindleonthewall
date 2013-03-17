@@ -15,10 +15,10 @@ class Debug {
     
     void begin(int);
     static int freeRam();
-    void info(String, ...);
-    void warning(String, ...);
-    void debug(String, ...);
-    void error(String, ...);
+    void info(char*, ...);
+    void warning(char*, ...);
+    void debug(char*, ...);
+    void error(char*, ...);
     
     void enable();
     void disable();
@@ -28,9 +28,7 @@ class Debug {
   
   private:
     boolean _enabled[4];
-    void printDebug(DebugType, String, String, va_list);
-    static String va_format(const prog_char*, va_list);
-    static String format(const prog_char*, ...);
+    void printDebug(DebugType, char*, char*, va_list);
 };
 
 #endif

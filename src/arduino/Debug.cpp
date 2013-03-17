@@ -13,13 +13,11 @@ void Debug::begin(int bitrate) {
   _enabled[ERROR] = true;
 }
 
-void Debug::printDebug(DebugType debugType, String debugTypeStr, String messageStr, va_list args) {
+void Debug::printDebug(DebugType debugType, char* debugTypeStr, char* format, va_list args) {
   if (_enabled[debugType]) {
-    char messageChars[messageStr.length()+1];
-    messageStr.toCharArray(messageChars, messageStr.length()+1);
     // message: "TYPE formatted_debug_message"
-    char* message = Utils::va_format(messageChars, args);
-
+    char* message = Utils::va_format(format, args);
+    
     Serial.print(debugTypeStr);
     Serial.print(" ");
     Serial.println(message);
@@ -27,28 +25,28 @@ void Debug::printDebug(DebugType debugType, String debugTypeStr, String messageS
   }
 }
 
-void Debug::info(String messageStr, ...) {
+void Debug::info(char* messageStr, ...) {
   va_list args;
   va_start(args, messageStr);
   this->printDebug(INFO, "INFO", messageStr, args);
   va_end(args);
 }
 
-void Debug::warning(String messageStr, ...) {
+void Debug::warning(char* messageStr, ...) {
   va_list args;
   va_start(args, messageStr);
   this->printDebug(WARNING, "WARNING", messageStr, args);
   va_end(args);
 }
 
-void Debug::debug(String messageStr, ...) {
+void Debug::debug(char* messageStr, ...) {
   va_list args;
   va_start(args, messageStr);
   this->printDebug(DEBUG, "DEBUG", messageStr, args);
   va_end(args);
 }
 
-void Debug::error(String messageStr, ...) {
+void Debug::error(char* messageStr, ...) {
   va_list args;
   va_start(args, messageStr);
   this->printDebug(ERROR, "ERROR", messageStr, args);

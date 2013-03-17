@@ -8,34 +8,34 @@
 
 class DogRPC {
   private:
-    String _signature;
-    String _message;
+    char* _signature;
+    char* _message;
     Debug *_debug;
     
     struct CmdCallback {
       char* command;
-      void (*function)(String[]);
+      void (*function)(char*[]);
     };                                    // Data structure to hold Command/Handler function key-value pairs
     CmdCallback *_commands;   // Actual definition for command/handler array
     int _numCmds;
     
     void parseMessage();
-    void evaluateCommand(char*, String[]);
-    String nextMessageToken();
-    int countSpaces(String);
+    void evaluateCommand(char*, char*[]);
+    char* nextMessageToken();
+    int countSpaces(char*);
     
   public:
     DogRPC();
-    void begin(String, int);
-    void begin(String, int, Debug*);
+    void begin(char*, int);
+    void begin(char*, int, Debug*);
     void refresh();
-    void write(String);
-    unsigned long createChecksum(String);
-    void registerCommand(char*, void (*func)(String[]));
-    CmdCallback *findCommand(String);
-    boolean commandExists(String);
-    void runBareCommand(String);
-    void runCommand(String, String[]);
+    void write(char*);
+    unsigned long createChecksum(char*);
+    void registerCommand(char*, void (*func)(char*[]));
+    CmdCallback *findCommand(char*);
+    boolean commandExists(char*);
+    void runBareCommand(char*);
+    void runCommand(char*, char*[]);
     
   
 };
