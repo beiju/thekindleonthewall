@@ -1,7 +1,8 @@
 #include <stdinout.h>
-#include "Debug.h"
-#include "DogRPC.h"
-#include "Transciever.h"
+#include <vector.h>
+#include <Debug.h>
+#include <DogRPC.h>
+#include <Transciever.h>
 
 #define LEDPIN 13
 #define RFPIN 12
@@ -15,8 +16,20 @@ Debug debug;
 DogRPC raspi;
 Transciever lights;
 
+/*************** Commands *****************/
+// Note: commands have to be declared above setup() because Arduino can't generate headers for them
+
+void lightsCmd(Vector<char*> args) {
+  // Pattern: 00BBCCAA00 where A, B, C is the on/off state of lights 1, 2, and 3 (11 = on, 00 = off)
+  int pattern = 0;
+  pattern += (strstr(args[0], "on") != NULL ? 0b00001100 : 0b0);
+  pattern += (strstr(args[1], "on") != NULL ? 0b11000000 : 0b0);
+  pattern += (strstr(args[2], "on") != NULL ? 0b00110000 : 0b0);
+  lights.send(pattern);
+}
+
 void setup() {
-  initializeSTDINOUT();
+  initializeSTDINOUT(); //! see if this needs to be here
   pinMode(LEDPIN, OUTPUT);
   
   debug.begin(BITRATE);
@@ -24,7 +37,7 @@ void setup() {
   debug.enable(Debug::WARNING);
   debug.enable(Debug::INFO);
   
-  raspi.begin(DOG_SIGNATURE, BITRATE, &debug);
+  raspi.begin(DOG_SIGNATURE, true);
   raspi.registerCommand("lights", lightsCmd);
   
   lights.begin(LIGHTS_SIG, LIGHTS_TERMINATION, RFPIN);
@@ -47,12 +60,4 @@ void loop() {
     digitalWrite(LEDPIN, LOW);
   }
     
-}
-
-void lightsCmd(String args[]) {
-  // Pattern: 00AABBCC00 where A, B, C is the on/off state of lights 1, 2, and 3 (11 = on, 00 = off)
-  int pattern = (args[0] == "on" ? 0b00001100 : 0b0);
-  pattern += (args[1] == "on" ? 0b11000000 : 0b0);
-  pattern += (args[2] == "on" ? 0b00110000 : 0b0);
-  lights.send(pattern);
 }
