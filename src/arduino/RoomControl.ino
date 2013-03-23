@@ -1,5 +1,4 @@
-#include "_utils.cpp"
-
+#include <stdinout.h>
 #include "Debug.h"
 #include "DogRPC.h"
 #include "Transciever.h"
@@ -17,7 +16,9 @@ DogRPC raspi;
 Transciever lights;
 
 void setup() {
+  initializeSTDINOUT();
   pinMode(LEDPIN, OUTPUT);
+  
   debug.begin(BITRATE);
   debug.enable(Debug::DEBUG);
   debug.enable(Debug::WARNING);
