@@ -31,7 +31,6 @@ void lightsCmd(Vector<char*> args) {
 }
 
 void testCmd(Vector<char*> args) {
-  debug.debug("Running test command");
   String argsStr = "";
   for (int i = 0; i < args.size(); i++) {
       argsStr += args[i];
@@ -53,7 +52,7 @@ void setup() {
   
   debug.begin(Debug::DEBUG, BITRATE);
   
-  raspi.begin(DOG_SIGNATURE, Debug::DEBUG, DOG_DEBUG_PREFIX);
+  raspi.begin(DOG_SIGNATURE, Debug::INFO, DOG_DEBUG_PREFIX);
   raspi.registerCommand("lights", lightsCmd);
   raspi.registerCommand("test", testCmd);
   
@@ -76,5 +75,4 @@ void loop() {
   } else {
     digitalWrite(LEDPIN, LOW);
   }
-    
 }
