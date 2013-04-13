@@ -33,7 +33,7 @@ void showCode(unsigned long receivedCode, unsigned int period) {
   
   //Print the received code.
   Serial.print("Code: ");
-  Serial.print(receivedCode);
+  Serial.print((receivedCode/3 & 3), 2);
   Serial.print(", period duration: ");
   Serial.print(period);
   Serial.println("us.");

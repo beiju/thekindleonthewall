@@ -5,7 +5,7 @@
 #include <Debug.h>
 #include <DogRPC.h>
 #include <RemoteReceiver.h>
-#include <RemoteSwitch.h>
+#include "EtekcitySwitch.h"
 
 /* The rest of the sketch is in the other files, which HAVE to be in order, 
    so don't rename them randomly:

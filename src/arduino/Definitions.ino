@@ -12,15 +12,11 @@
 #define BITRATE 9600
 
 // Wireless communication details
-#define LIGHTS_SIGNAL_REPETITIONS 2
+#define LIGHTS_SIGNAL_REPETITIONS 2 ///! currently not used in transmission(?)
 #define LIGHTS_PERIOD_DURATION 260 // microseconds
-#define LIGHT_1_CODE   432974
-#define LIGHT_2_CODE   432956
-#define LIGHT_3_CODE   432950
-#define LIGHT_12_CODE  432983
-#define LIGHT_13_CODE  432977
-#define LIGHT_23_CODE  432959
-#define LIGHT_123_CODE 432986
+#define LIGHTS_SIGNATURE 21022222
+#define CUSTOM_SIGNATURE 2,1,0,2,2,2,1,2
 #define MAX_TIME_BEFORE_REPEAT_PULSE 1000 // milliseconds
 
 #define BIT_ON(var, mask) ((var & mask) == mask ? "on" : "off")
+#define BITWISE_STATUS(var) BIT_ON(var, 0b001), BIT_ON(var, 0b010), BIT_ON(var, 0b100)
