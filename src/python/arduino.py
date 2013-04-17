@@ -18,24 +18,31 @@ class Utils:
 
 class Arduino:
     def __init__(self):
-        self.com = serial.Serial(FILENAME, BAUD, timeout=TIMEOUT)
-        try:
-            self.com.open()
-        except:
-            pass
+        self.open()
 
     def send_raw_command(self, raw_command):
-        checksum = Utils.checksum(raw_command)
-        output = '%s %s %s\r\n' % (SIGNATURE, raw_command, checksum)
-        print output
-        self.com.write(output)
+        if connected:
+            checksum = Utils.checksum(raw_command)
+            output = '%s %s %s\r\n' % (SIGNATURE, raw_command, checksum)
+            print output
+            self.com.write(output)
         
     def send_command(self, command_name, *args):
-        self.send_raw_command(' '.join((command_name,) + args))
+        if connected:
+            self.send_raw_command(' '.join((command_name,) + args))
 
     def toggle_lights(self, number):
-        self.send_command('togglelight', (number,))
+        if connected:
+            self.send_command('togglelight', (number,))
 
     def close(self):
         self.com.close()
+        self.connected = False
 
+    def open(self):
+        try:
+            self.com = serial.Serial(FILENAME, BAUD, timeout=TIMEOUT)
+            self.com.open()
+            self.connected = True
+        except:
+            self.connected = False
