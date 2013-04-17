@@ -1,0 +1,188 @@
+@font-face { 
+	font-family: 'Helvetica Neue LT'; 
+	font-weight: lighter; 
+	src: url('helvetica-neue-light.otf'); 
+}
+
+@font-face { 
+	font-family: 'Helvetica Neue LT'; 
+	font-weight: lighter; 
+	font-style: italic;
+	src: url('helvetica-neue-light-italic.otf'); 
+}
+
+body {
+	width: 798px;
+	height: 560px;
+	padding: 0;
+	margin: 0;
+	border: 1px solid #333;
+	overflow: hidden;
+	
+	font-family: 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+.hidden {
+	display: none;
+}
+
+.invisible {
+	visibility: hidden;
+}
+
+.secondary {
+	color: #888;
+}
+
+.label {
+	margin: 5px 0 0;
+	font-style: italic;
+	text-align: left;
+	font-size: 18px;
+	color: #888;
+}
+
+.faded {
+	color: #666;
+}
+
+#notifications {
+	background-color: #D8D8D8;
+	height: 40px;
+}
+
+#notifications h1 {
+	margin: 0 10px;
+	line-height: 40px;
+	font-size: 26px;
+	display: run-in;
+}
+
+#notifications p {
+	margin: 0;
+	font-size: 24px;
+}
+
+#notifications .until {
+	font-style: italic;
+	font-family: 'Helvetica Neue LT';
+	font-size: .9em;
+}
+
+#info {
+	display: table;
+	border-spacing: 10px;
+	height: 160px; /* 200px - border-spacing * 2 */
+}
+
+#info section {
+	display: table-cell;
+	text-align: center;
+	vertical-align: middle;
+}
+
+#info p {
+	margin: 0;
+}
+
+#time {
+	font-size: 144px;
+	width: 352px;
+	line-height: 1;
+}
+
+#temperature,
+#weather {
+	width: 220px;
+}
+
+#temperature {
+	font-size: 48px;
+}
+
+#temperature .secondary {
+	font-size: .8em;
+}
+
+#info #weather { /* Specificity */
+	line-height: 1.2;
+	text-align: left;
+}
+
+#weather p {
+	font-size: 20px;
+	margin: 10px 0 10px 2em;
+	text-indent: -1em;
+}
+
+#weather .label {
+	font-family: 'Helvetica Neue LT';
+	letter-spacing: 1px;
+	display: run-in;
+}
+
+#dining {
+	font-size: 24px;
+	color: #444;
+	text-align: center;
+}
+
+#dining p {
+	margin: 0;
+	font-family: 'Helvetica Neue LT';
+}
+
+#dining .em {
+	font-family: 'Helvetica Neue';
+	color: #222;
+}
+
+#will, #ian {
+	float: left;
+	width: 359px;
+	padding: 10px 20px;
+}
+
+#will h1, #ian h1 {
+	text-align: center;
+	font-size: 60px;
+	margin: 30px 0 0;
+	font-family: 'Helvetica Neue LT';
+}
+
+.location p {
+	margin: 0;
+	font-size: 24px;
+	line-height: 1.2;
+}
+
+.location .place {
+	font-weight: bold;
+}
+
+.location .activity {
+	text-indent: 1em;
+	font-size: 18px;
+}
+
+.meals {
+	display: table;
+	width: 100%;
+	margin-top: 10px;
+}
+
+.meals div {
+	display: table-cell;
+	width: 33%;
+	text-align: center;
+}
+
+.meals div div:nth-of-type(2) {
+	margin: -87px auto 0;
+	display: block !important;
+}
+
+.meals p {
+	margin: 5px;
+	font-size: 16px;
+}

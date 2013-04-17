@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Kindle Status Screen</title>
+	
+	<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	
+	<link rel="stylesheet" href="/static/style.css" type="text/css" />
+</head>
+<body>
+	<section id="notifications"><h1 class="fill">Notifications</h1><p class="fill invisible">Placeholder Text</p></section>
+	
+	<section id="info">
+		<section id="weather" class="invisible">
+			<h1 class="label">Currently: </h1>
+			<p id="weather_currently" class="fill"></p>
+			<h1 class="label">Next: </h1>
+			<p id="weather_next" class="fill"></p>
+			<h1 class="label">Later: </h1>
+			<p id="weather_later" class="fill"></p>
+		</section>
+		<section id="time" class="fill invisible">00:00</section>
+		<section id="temperature" class="invisible">
+			<p><span id="fahrenheit" class="fill">00</span> <span class="secondary">&deg;F</span></p>
+			<p><span id="celsius" class="fill">00</span> <span class="secondary">&deg;C</span></p>
+		</section> 
+	</section>
+	
+	<section id="dining">
+		<p id="daka" class="invisible">DAKA is <span id="daka-status" class="fill em"></span> and will <span id="daka-change-text" class="fill"></span> in <span id="daka-change-time" class="fill em"></span>.</p>
+		<p id="spoon" class="invisible">The Spoon is <span id="spoon-status" class="fill em"></span> and will <span id="spoon-change-text" class="fill"></span> in <span id="spoon-change-time" class="fill em"></span>.</p>
+	</section>
+
+	<section id="will">
+		<h1>Will</h1>
+		
+		<section class="location invisible">
+			<p class="place fill">Location Unknown</p>
+			<p class="activity fill">Unknown</p>
+		</section>
+		
+		<section class="meals invisible">
+			<div class="normal-meals">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Meals</p>
+			</div>
+			<div class="special-meals">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Special Meals</p>
+			</div>
+			<div class="bonus-points">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Bonus Points</p>
+			</div>
+		</section>
+	</section>
+	
+	<section id="ian">
+		<h1>Ian</h1>
+		
+		<section class="location invisible">
+			<p class="place fill">Location Unknown</p>
+			<p class="activity fill">Unknown</p>
+		</section>
+		
+		<section class="meals invisible">
+			<div class="normal-meals">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Meals</p>
+			</div>
+			<div class="special-meals">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Special Meals</p>
+			</div>
+			<div class="bonus-points">
+				<input class="dial fill number" type="text" value="0" />
+				<input class="dial fill days" type="text" value="0" />
+				<p>Bonus Points</p>
+			</div>
+		</section>
+	</section>
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/1.7.2/moment.min.js" type="text/javascript"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js" type="text/javascript"></script>
+	<script src="/static/jquery.knob.js"></script>
+	<script src="/static/script.js"></script>
+	<script src="https://apis.google.com/js/auth.js?onload=update" type="text/javascript"></script>
+	<script>try {
+		kindle.dev.setOrientation("landscape");
+	} catch (e) {}</script>
+</body>
+</html>

@@ -8,7 +8,8 @@ print "Flask imported"
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    print 'connected', the_arduino.connected
+    return render_template('base.html')
 
 
 @app.route('/run', methods=['POST'])
@@ -21,4 +22,4 @@ def run_command():
 
 
 if __name__ == "__main__":
-    app.run('0.0.0.0', 5000)
+    app.run('0.0.0.0', 5000,debug=True)
