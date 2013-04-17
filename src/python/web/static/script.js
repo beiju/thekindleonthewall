@@ -1,3 +1,15 @@
+$(function(){ //DOM Ready
+ 
+    $(".gridster ul").gridster({
+        widget_margins: [5, 5],
+        widget_base_dimensions: [90, 75]
+    });
+    
+    // Start the update cycle (this function will perpetuate itself)
+    update();
+ 
+});
+
 var updateCount = 0,
 	weatherUpdateCountdown = 0,
 	weatherDisabled = false;
@@ -157,22 +169,22 @@ function update() { // will be called by google API the first time, then by itse
 			jsonp: false,
 			jsonpCallback: callbackName,
 			success: function(response) { //! put the stuff in the val()
-				$('#'+person+' .normal-meals .fill.number').val(87).knob(_.extend(numOpts, {'max': 190}));
-				$('#'+person+' .special-meals .fill.number').val(18).knob(_.extend(numOpts, {'max': 32}));
-				$('#'+person+' .bonus-points .fill.number').val(50.3).knob(_.extend(numOpts, {'max': 100}));
-				
-				$('#'+person+' .fill.days').knob(dateOpts);
-				
-				$('#'+person+' .meals').removeClass('invisible');
+				$('.'+person+'.normal-meals .fill.number').val(87).knob(_.extend(numOpts, {'max': 190}));
+				$('.'+person+'.special-meals .fill.number').val(18).knob(_.extend(numOpts, {'max': 32}));
+				$('.'+person+'.bonus-points .fill.number').val(50.3).knob(_.extend(numOpts, {'max': 100}));
+				   
+				$('.'+person+' .fill.days').knob(dateOpts);
+				   
+				$('.'+person+'.meals').removeClass('invisible');
 			}
 		});
-		$('#'+person+' .normal-meals .fill.number').val(87).knob(_.extend(numOpts, {'max': 190}));
-		$('#'+person+' .special-meals .fill.number').val(18).knob(_.extend(numOpts, {'max': 32}));
-		$('#'+person+' .bonus-points .fill.number').val(50.3).knob(_.extend(numOpts, {'max': 100}));
-		
-		$('#'+person+' .fill.days').knob(dateOpts);
-		
-		$('#'+person+' .meals').removeClass('invisible');
+		$('.'+person+'.normal-meals .fill.number').val(87).knob(_.extend(numOpts, {'max': 190}));
+		$('.'+person+'.special-meals .fill.number').val(18).knob(_.extend(numOpts, {'max': 32}));
+		$('.'+person+'.bonus-points .fill.number').val(50.3).knob(_.extend(numOpts, {'max': 100}));
+		   
+		$('.'+person+' .fill.days').knob(dateOpts);
+		   
+		$('.'+person+'.meals').removeClass('invisible');
 		
 	}
 	
