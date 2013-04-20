@@ -17,13 +17,18 @@ class Utils:
 
 
 class Arduino:
-    def __init__(self):
+    def __init__(self, signature, filename, baud, timeout):
+        self.signature = signature
+        self.filename = filename
+        self.baud = baud
+        self.timeout = timeout
+        
         self.open()
 
     def send_raw_command(self, raw_command):
         if connected:
             checksum = Utils.checksum(raw_command)
-            output = '%s %s %s\r\n' % (SIGNATURE, raw_command, checksum)
+            output = '%s %s %s\r\n' % (self.signature, raw_command, checksum)
             print output
             self.com.write(output)
         
@@ -41,7 +46,7 @@ class Arduino:
 
     def open(self):
         try:
-            self.com = serial.Serial(FILENAME, BAUD, timeout=TIMEOUT)
+            self.com = serial.Serial(self.filename, self.baud, timeout=self.timeout)
             self.com.open()
             self.connected = True
         except:

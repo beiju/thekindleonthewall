@@ -2,7 +2,7 @@ $(function(){ //DOM Ready
  
     $(".gridster ul").gridster({
         widget_margins: [5, 5],
-        widget_base_dimensions: [90, 75]
+        widget_base_dimensions: [90, 64]
     });
     
     // Start the update cycle (this function will perpetuate itself)
@@ -10,62 +10,13 @@ $(function(){ //DOM Ready
  
 });
 
-var updateCount = 0,
-	weatherUpdateCountdown = 0,
-	weatherDisabled = false;
+var updateCount = 0;
 
 function update() { // will be called by google API the first time, then by itself
 	////// Time //////
 	var now = new Date(),
 		timeString = (now.getHours() % 12 == 0 ? '12' : now.getHours() % 12) + ':' + (now.getMinutes()<10 ? '0' : '') + now.getMinutes();
 	$('#time.fill').html(timeString).removeClass('invisible');
-	
-
-	////// Temperature & Alerts //////
-	if (updateCount % 5 == 0 && !weatherDisabled) { // every 5 updates -> every 5 minutes
-		$.ajax({
-			dataType : "jsonp",
-			url: 'http://api.wunderground.com/api/96669c781997f3d7/conditions/alerts/q/CA/01609.json', 
-			
-			success: function(data) {
-				$('#temperature').removeClass('invisible');
-				$('#fahrenheit.fill').html(data.current_observation.feelslike_f);
-				$('#celsius.fill').html(data.current_observation.feelslike_c);
-				
-				if (data.alerts.length > 0) {
-					$('#notifications h1.fill').html('Weather Alert'+(data.alerts.length>1 ? 's' : ''));
-					var alertHTML = '';
-					for (var i = 0; i < data.alerts.length; i++) {
-						alertHTML += data.alerts[i].description;
-						alertHTML += ' <span class="until">' + moment.unix(data.alerts[i].expires_epoch).format('until h:mma on ddd') + '</span>';
-						if (data.alerts.length - i > 1 ) { // if this is not the last alert
-							alertHTML += '<span class="spacer"></span>'
-						}
-					}
-					$('#notifications p.fill').html(alertHTML).removeClass('invisible');
-				} else {
-					$('#notifications p.fill').addClass('invisible');
-				}
-			}
-		});
-	}
-	
-	////// Weather //////
-	if (weatherUpdateCountdown-- <= 0 && !weatherDisabled) {
-		$.ajax({
-			dataType : "jsonp",
-			url: 'https://api.darkskyapp.com/v1/brief_forecast/79110f2572af93fe93997203c876e83a/42.272328,-71.805456', 
-			
-			success: function(data) {
-				$('#weather').removeClass('invisible');
-				$('#weather_currently.fill').html(data.currentSummary);
-				$('#weather_next.fill').html(data.hourSummary);
-				$('#weather_later.fill').html(data.daySummary);
-				
-				weatherUpdateCountdown = data.checkTimeout / 60;
-			}
-		});
-	}
 	
 	////// DAKA Hours //////
 	if (updateCount % 60 == 0) { // every 60 updates -> every hour

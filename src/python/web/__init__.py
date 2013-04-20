@@ -1,16 +1,64 @@
-from flask import Flask, request, g, render_template, redirect, url_for
+from flask import Flask, request, g, render_template, redirect, url_for, session, jsonify, json
+from flask_oauth import OAuth
+from forecastio import Forecast
 import room_controller.arduino
+import time
+import pytz
+import datetime
+from dateutil.parser import parse
+from settings import *
 
 
 app = Flask(__name__)
-the_arduino = room_controller.arduino.Arduino()
+app.secret_key = GOOGLE_SECRET_KEY
+
+forecast = Forecast(FORECAST_API, FORECAST_UNITS, FORECAST_LAT, FORECAST_LONG)
+
+oauth = OAuth()
+google = oauth.remote_app('google',
+                          base_url='https://www.google.com/accounts/',
+                          authorize_url='https://accounts.google.com/o/oauth2/auth',
+                          request_token_url=None,
+                          request_token_params={'scope': 'https://www.googleapis.com/auth/calendar',
+                                                'response_type': 'code'},
+                          access_token_url='https://accounts.google.com/o/oauth2/token',
+                          access_token_method='POST',
+                          access_token_params={'grant_type': 'authorization_code'},
+                          consumer_key=GOOGLE_CLIENT_ID,
+                          consumer_secret=GOOGLE_CLIENT_SECRET)
+
+the_arduino = room_controller.arduino.Arduino(SIGNATURE, FILENAME, BAUD, TIMEOUT)
+
+cache = dict()
 print "Flask imported"
 
 @app.route('/')
 def index():
     print 'connected', the_arduino.connected #!
     return render_template('index.html')
-
+    
+@app.route('/update')
+def update():   
+    lastUpdate = int(request.args.get('lastUpdate') or 0) / 1000
+    data = dict()
+    # If the most recent forecast_upd happened BEFORE the last json request, or if it happened too long ago
+    if ('forecast_upd' not in cache or 
+            cache['forecast_upd'] < lastUpdate or 
+            time.time() - cache['forecast_upd'] > FORECAST_INTERVAL): 
+        data['forecast'] = query_forecast()
+    
+    if 'lights' in cache and ('lights_upd' not in cache or cache['lights_upd'] < lastUpdate):
+        data['lights'] = cache['lights']
+    
+    if ('calendar_upd' not in cache or 
+            cache['calendar_upd'] < lastUpdate or 
+            time.time() - cache['calendar_upd'] > CALENDAR_INTERVAL):
+        data['calendar'] = query_google()
+        if data['calendar'] == True:
+            return redirect(url_for('login'))
+            print "Deauthorized request for calendar"
+    
+    return jsonify(data)
 
 @app.route('/run', methods=['POST'])
 def run_command():
@@ -18,8 +66,175 @@ def run_command():
     print 'command', command
     the_arduino.send_raw_command(command)
     print 'command', command
-    return redirect(url_for('index'))
+    return redirect(url_for('run'))
+    
+@app.route('/login')
+def login():
+    callback=url_for('authorized', _external=True)
+    return google.authorize(callback=callback)
 
+    
+@app.route(GOOGLE_REDIRECT_URI)
+@google.authorized_handler
+def authorized(response):
+    access_token = response['access_token']
+    session['access_token'] = access_token, ''
+    return redirect(url_for('update'))
+
+
+@google.tokengetter
+def get_access_token():
+    return session.get('access_token')
+    
+def query_forecast():
+    forecast.get_forecast()
+    data = dict()
+    
+    if 'current' in forecast.forecast: 
+        data['temp_c'] = forecast.current['temperature']
+        data['temp_f'] = 32 + 9 / 5 * forecast.current['temperature']
+        data['wind_speed'] = forecast.current['windSpeed']
+        data['wind_dir'] = forecast.current['windBearing']
+    if 'minutely' in forecast.forecast: data['current'] = forecast.nexthour['summary']
+    if 'hourly' in forecast.forecast: data['next'] = forecast.hourly['summary']
+    if 'daily' in forecast.forecast: data['later'] = forecast.daily['summary']
+    
+    cache['forecast_upd'] = time.time()
+    
+    return data
+
+def query_google():
+    caldata = dict()
+
+    access_token = session.get('access_token')
+    if access_token is None:
+        return True
+    
+    access_token = access_token[0]
+        
+    caldata['daka_hours'] = query_gcal(access_token, '0cto0462lqrpt673m51bf1ucuk%40group.calendar.google.com')
+    if caldata['daka_hours'] == True: return True
+    caldata['spoon_hours'] = query_gcal(access_token, 'ieqe1kvtb6narapqoafv59umog%40group.calendar.google.com')
+
+    caldata['will'] = query_gcals(access_token, '488or1ai5vadl5psti3iq8ipgs%40group.calendar.google.com', # work
+        'beiju.i.am%40gmail.com', # personal
+        't7ijq9al3asosqh1jnp93hvgdk%40group.calendar.google.com') # class
+    caldata['ian'] = query_gcals(access_token, 'sodbfdhm4q7api4qvf5h5k7rlg%40group.calendar.google.com', # social
+        '36gqite9pam369c6mknuttgsqg%40group.calendar.google.com', # work
+        'achgl7e3m1pokdo8o1uqis70fk%40group.calendar.google.com', # ACM
+        'jnqo9lo8efm5ogj78pr176qstg%40group.calendar.google.com', # WPI Extracurricular
+        'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
+        'ianonavy%40gmail.com')
+
+    cache['calendar_upd'] = time.time()
+    return caldata
+
+def query_gcals(access_token, *calIDs):
+    data = dict() 
+    for calID in calIDs:
+        currdata = query_gcal(access_token, calID)
+        if currdata == False:
+            continue
+        if 'current' in currdata and currdata['current'] and 'current' not in data:
+            data['current'] = currdata['current']
+            print 'found some current data', data['current']
+        if 'next' in currdata and currdata['next'] and ('next' not in data or parse(currdata['next']['start_time']) < parse(data['next']['start_time'])):
+            data['next'] = currdata['next']
+            print 'found some next data', data['next']
+            if 'current' in data and 'end_time' in data['current'] and 'start_time' in data['next'] and \
+                    abs(parse(data['current']['end_time']) - parse(data['next']['start_time'])) < datetime.timedelta(minutes=5):
+                data['next']['continuation'] = True
+                return data; # at this point the data won't ever change
+            else:
+                data['next']['continuation'] = False
+    return data
+    
+def query_gcal(access_token, calID):
+    from urllib2 import Request, urlopen, URLError
+
+    url = 'https://www.googleapis.com/calendar/v3/calendars/'
+    url+= calID+'/events'
+    url+= '?maxResults=7'
+    url+= '&orderBy=startTime'
+    url+= '&singleEvents=true'
+    url+= '&timeMin='+datetime.date.today().isoformat()+'T00:00:00Z'
+    url+= '&key='+GOOGLE_SECRET_KEY
+    
+    req = Request(url, None, {'Authorization': 'OAuth '+access_token})
+    try:
+        res = urlopen(req)
+    except URLError, e:
+        if e.code == 401:
+            # Unauthorized - bad token
+            session.pop('access_token', None)
+            return True
+        if e.code == 403: 
+            return {
+                'error': "403 Forbidden", 
+                'note': "This error is often caused by sending an API request from an IP address not included in https://code.google.com/apis/console",
+                'url': url
+            }
+        res = urlopen(req) 
+    
+    try:
+        items = json.loads(res.read())['items']
+    except KeyError, e:
+        return False
+
+    data = dict()
+    now = datetime.datetime.now(pytz.utc)
+    for item in items:
+        if 'dateTime' not in item['start']: #all-day event
+            startTime = pytz.utc.localize(parse(item['start']['date']))
+            endTime = pytz.utc.localize(parse(item['end']['date'])+datetime.timedelta(days=1,seconds=-1))
+        else:
+            startTime = parse(item['start']['dateTime'])
+            endTime = parse(item['end']['dateTime'])
+        
+        if 'current' not in data: # Look for the current event
+            if startTime < now and endTime > now:
+                print 'Current event: ', item['summary']
+                data['current'] = {
+                    'start_time': str(startTime),
+                    'start_time_str': startTime.strftime('%I:%M %p'),
+                    'end_time': str(endTime),
+                    'end_time_str': endTime.strftime('%I:%M %p'),
+                    'duration': time_btwn(startTime, endTime),
+                    'remaining_time': time_btwn(now, endTime),
+                    'event_name': item['summary']
+                }
+            else: print 'NOT current event: ', item['summary']
+        if 'next' not in data:
+            if startTime > now: # The first event for which startTime is after now is 'next', since events are ordered by startTime
+                data['next'] = {
+                    'start_time': str(startTime),
+                    'start_time_str': startTime.strftime('%I:%M %p'),
+                    'end_time': str(endTime),
+                    'end_time_str': endTime.strftime('%I:%M %p'),
+                    'duration': time_btwn(startTime, endTime),
+                    'time_until': time_btwn(startTime, now),
+                    'event_name': item['summary'],
+                    'continuation': 'current' in data and (abs(startTime - parse(data['current']['end_time'])) < datetime.timedelta(minutes=5))
+                }
+                
+    if 'current' not in data:
+        data['current'] = {} # Do this to clear cached result
+     
+    return data
+
+def time_btwn(datetime1, datetime2):
+    hours, remainder = divmod((datetime2 - datetime1).seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    strval = ''
+    if hours == 1:
+        strval += '1 hour '
+    elif hours != 0:
+        strval += str(hours)+' hours '
+    if minutes == 1:
+        strval += '1 minute '
+    elif minutes != 0: 
+        strval += str(minutes)+' minutes '
+    return strval.strip()
 
 if __name__ == "__main__":
     app.run('0.0.0.0', 5000,debug=True)

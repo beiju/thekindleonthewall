@@ -6,6 +6,8 @@
 	
 	<link rel="stylesheet" href="/static/jquery.gridster.min.css" type="text/css" />
 	<link rel="stylesheet" href="/static/style.css" type="text/css" />
+  
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
 	<section id="notifications"><h1 class="fill">Notifications</h1><p class="fill invisible">Placeholder Text</p></section>
@@ -13,7 +15,7 @@
     <ul>
       <!-- Info (top row) -->
       <li data-row="1" data-col="3" data-sizex="4" data-sizey="2" id="time" class="fill invisible">00:00</li>
-  		<li data-row="1" data-col="1" data-sizex="2" data-sizey="2"  id="weather" class="invisible">
+  		<li data-row="1" data-col="1" data-sizex="2" data-sizey="4" id="weather" class="invisible">
   			<h1 class="label">Currently: </h1>                     
   			<p id="weather_currently" class="fill"></p>            
   			<h1 class="label">Next: </h1>                          
@@ -21,13 +23,13 @@
   			<h1 class="label">Later: </h1>                         
   			<p id="weather_later" class="fill"></p>                
   		</li>                                                    
-  		<li data-row="1" data-col="6" data-sizex="2" data-sizey="2" id="temperature" class="invisible">
+  		<li data-row="1" data-col="7" data-sizex="2" data-sizey="2" id="temperature" class="invisible">
   			<p><span id="fahrenheit" class="fill">00</span> <span class="secondary">&deg;F</span></p>
   			<p><span id="celsius" class="fill">00</span> <span class="secondary">&deg;C</span></p>
   		</li>
       
       <!-- Buttons -->
-      <li data-row="2" data-col="1" data-sizex="2" data-sizey="4" id="buttons">
+      <li data-row="5" data-col="1" data-sizex="2" data-sizey="3" id="buttons">
         <button class="off" id="light1">Light 1</button>
         <button class="off" id="light2">Light 2</button>
       </li>
@@ -40,21 +42,21 @@
       
       <!-- Will -->
       <li data-row="4" data-col="3" data-sizex="3" data-sizey="1" class="will"><h1>Will</h1></li>
-  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="1" class="will location">
+  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="2" class="will location">
   			<p class="place fill invisible">Location Unknown</p>
   			<p class="activity fill invisible">Unknown</p>
   		</li>
-			<li data-row="6" data-col="3" data-sizex="1" data-sizey="1" class="will meals normal-meals">
+			<li data-row="7" data-col="3" data-sizex="1" data-sizey="1" class="will meals normal-meals">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Meals</p>
 			</li>
-			<li data-row="6" data-col="4" data-sizex="1" data-sizey="1" class="will meals special-meals">
+			<li data-row="7" data-col="4" data-sizex="1" data-sizey="1" class="will meals special-meals">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Special Meals</p>
 			</li>
-			<li data-row="6" data-col="5" data-sizex="1 " data-sizey="1" class="will meals bonus-points">
+			<li data-row="7" data-col="5" data-sizex="1" data-sizey="1" class="will meals bonus-points">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Bonus Points</p>
@@ -62,21 +64,21 @@
       
       <!-- Ian -->
       <li data-row="4" data-col="3" data-sizex="3" data-sizey="1" class="ian"><h1>Ian</h1></li>
-  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="1" class="ian location">
+  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="2" class="ian location">
   			<p class="place fill invisible">Location Unknown</p>
   			<p class="activity fill invisible">Unknown</p>
   		</li>
-			<li data-row="6" data-col="3" data-sizex="1" data-sizey="1" class="ian meals normal-meals">
+			<li data-row="7" data-col="3" data-sizex="1" data-sizey="1" class="ian meals normal-meals">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Meals</p>
 			</li>
-			<li data-row="6" data-col="4" data-sizex="1" data-sizey="1" class="ian meals special-meals">
+			<li data-row="7" data-col="4" data-sizex="1" data-sizey="1" class="ian meals special-meals">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Special Meals</p>
 			</li>
-			<li data-row="6" data-col="5" data-sizex="1 " data-sizey="1" class="ian meals bonus-points">
+			<li data-row="7" data-col="5" data-sizex="1 " data-sizey="1" class="ian meals bonus-points">
 				<input class="dial fill number" type="text" value="0" />
 				<input class="dial fill days" type="text" value="0" />
 				<p>Bonus Points</p>
