@@ -18,6 +18,18 @@ void dummyCmd(unsigned long receivedPattern, unsigned int period) {
     digitalWrite(DEBUG_LED, !digitalRead(DEBUG_LED)); // toggle DEBUG_LED
 }
 
+/*************************
+* Status Screen commands *
+*************************/
+//! Untested, probably has off-by-1 errors
+void statusRequestCmd(Vector<char*> args) {
+  if (strstr(args[0], "lights") != NULL) { // Request for the status of the lights
+    char lightStatusStr[18] = "lights_status ";
+    itoa(lightStatus, lightStatusStr+strlen(lightStatusStr), 2); // last parameter = base (ie base 2 = binary)
+    raspi.write(lightStatusStr);
+  }
+}
+
 /******************
 * Lights Commands *
 ******************/
@@ -57,3 +69,4 @@ void lightStatusCorrectionCmd(Vector<char*> args) {
   if (strstr(args[2], "on") != NULL) lightStatus |= 0b100;
   debug.info("Light status corrected, new status should be %s, %s, %s", args[0], args[1], args[2]);
 }
+

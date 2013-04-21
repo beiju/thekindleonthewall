@@ -12,6 +12,7 @@ void setup() {
   raspi.begin(DOG_SIGNATURE, Debug::INFO, DOG_DEBUG_PREFIX);
   raspi.registerCommand("lights", lightsCmd);
   raspi.registerCommand("test", testCmd);
+  raspi.registerCommand("send_status", statusRequestCmd);
   
   RemoteReceiver::init(RF_RECIEVER_INTERRUPT, LIGHTS_SIGNAL_REPETITIONS, rfSignalRecievedCmd);
   pinMode(LIGHT_BTN_LED, OUTPUT);
