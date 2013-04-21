@@ -1,4 +1,5 @@
 from flask import Flask, request, g, render_template, redirect, url_for, session, jsonify, json
+from apscheduler.scheduler import Scheduler
 from flask_oauth import OAuth
 from forecastio import Forecast
 import room_controller.arduino
@@ -10,6 +11,8 @@ from settings import *
 
 
 app = Flask(__name__)
+sched = Scheduler()
+sched.start()
 app.secret_key = GOOGLE_SECRET_KEY
 
 forecast = Forecast(FORECAST_API, FORECAST_UNITS, FORECAST_LAT, FORECAST_LONG)
@@ -39,16 +42,23 @@ def index():
     
 @app.route('/update')
 def update():   
-    lastUpdate = int(request.args.get('lastUpdate') or 0) / 1000
+    lastUpdate = float(request.args.get('lastUpdate') or 0)
     data = dict()
-    # If the most recent forecast_upd happened BEFORE the last json request, or if it happened too long ago
-    if ('forecast_upd' not in cache or 
-            cache['forecast_upd'] < lastUpdate or 
-            time.time() - cache['forecast_upd'] > FORECAST_INTERVAL): 
-        data['forecast'] = query_forecast()
+    
+    if 'forecast_upd' not in cache:
+        forecast_upd()
+    if lastUpdate < cache['forecast_upd']: 
+        data['forecast'] = cache['forecast']
+    
+    if 'local_info_upd' not in cache:
+        local_info_upd()
+    if lastUpdate < cache['local_info_upd']:
+        data['local_info'] = cache['local_info']
     
     if 'lights' in cache and ('lights_upd' not in cache or cache['lights_upd'] < lastUpdate):
         data['lights'] = cache['lights']
+    
+    return jsonify(data) #!temp
     
     if ('calendar_upd' not in cache or 
             cache['calendar_upd'] < lastUpdate or 
@@ -56,7 +66,7 @@ def update():
         data['calendar'] = query_google()
         if data['calendar'] == True:
             return redirect(url_for('login'))
-            print "Deauthorized request for calendar"
+            print "Unauthorized request for calendar"
     
     return jsonify(data)
 
@@ -85,8 +95,10 @@ def authorized(response):
 @google.tokengetter
 def get_access_token():
     return session.get('access_token')
-    
-def query_forecast():
+
+@sched.interval_schedule(minutes=5)
+def forecast_upd():
+    print "Updating forecast"
     forecast.get_forecast()
     data = dict()
     
@@ -99,9 +111,12 @@ def query_forecast():
     if 'hourly' in forecast.forecast: data['next'] = forecast.hourly['summary']
     if 'daily' in forecast.forecast: data['later'] = forecast.daily['summary']
     
+    cache['forecast'] = data
     cache['forecast_upd'] = time.time()
-    
-    return data
+
+def local_info_upd():
+    the_arduino.send_command('send_status', 'lights')
+    # the_arduino.send_command('send_status', 'temperature') # When there's a temp sensor on the arduino, enable this
 
 def query_google():
     caldata = dict()
@@ -142,7 +157,7 @@ def query_gcals(access_token, *calIDs):
             data['next'] = currdata['next']
             print 'found some next data', data['next']
             if 'current' in data and 'end_time' in data['current'] and 'start_time' in data['next'] and \
-                    abs(parse(data['current']['end_time']) - parse(data['next']['start_time'])) < datetime.timedelta(minutes=5):
+                    abs(parse(data['current']['end_time']) - parse(data['next']['start_time'])) < time.timedelta(minutes=5):
                 data['next']['continuation'] = True
                 return data; # at this point the data won't ever change
             else:
