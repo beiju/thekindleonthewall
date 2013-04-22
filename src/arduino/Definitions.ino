@@ -9,7 +9,7 @@
 // Raspberry Pi Connection Details
 #define DOG_SIGNATURE "Dog"
 #define DOG_DEBUG_PREFIX "DOG"
-#define BITRATE 9600
+#define BITRATE 115200
 
 // Wireless communication details
 #define LIGHTS_SIGNAL_REPETITIONS 2 ///! currently not used in transmission(?)

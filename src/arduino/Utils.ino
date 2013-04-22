@@ -19,4 +19,12 @@ void processQueuedPatterns() {
   debug.info("Toggled lights with signal `%s %s %s`, new status `%s, %s, %s`", 
     BIT_ON(signal, 0b001), BIT_ON(signal, 0b010), BIT_ON(signal, 0b100),
     BIT_ON(lightStatus, 0b001), BIT_ON(lightStatus, 0b010), BIT_ON(lightStatus, 0b100));
+  
+  sendLightsStatus(); // Update the raspberry pi
+}
+
+void sendLightsStatus() {
+  char lightStatusStr[18] = "lights_status ";
+  itoa(lightStatus, lightStatusStr+strlen(lightStatusStr), 2); // last parameter = base (ie base 2 = binary)
+  raspi.write(lightStatusStr);
 }

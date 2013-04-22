@@ -7,7 +7,7 @@ void setup() {
   puts(" ");
   puts(" ");
   puts(" ");
-  debug.begin(Debug::DEBUG, BITRATE);
+  debug.begin(Debug::INFO, BITRATE);
   
   raspi.begin(DOG_SIGNATURE, Debug::INFO, DOG_DEBUG_PREFIX);
   raspi.registerCommand("lights", lightsCmd);

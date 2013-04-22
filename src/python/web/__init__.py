@@ -8,9 +8,10 @@ import pytz
 import datetime
 from dateutil.parser import parse
 from settings import *
-
+import logging
 
 app = Flask(__name__)
+logging.basicConfig() # used by apscheduler
 sched = Scheduler()
 sched.start()
 app.secret_key = GOOGLE_SECRET_KEY
@@ -31,10 +32,17 @@ google = oauth.remote_app('google',
                           consumer_secret=GOOGLE_CLIENT_SECRET)
 
 the_arduino = room_controller.arduino.Arduino(SIGNATURE, FILENAME, BAUD, TIMEOUT)
-
 cache = dict()
 print "Flask imported"
-
+if the_arduino.connected:
+    print "Starting up with arduino connected"
+else:
+    print "Starting up without arduino connected"
+    
+##########
+# Routes #
+##########
+    
 @app.route('/')
 def index():
     print 'connected', the_arduino.connected #!
@@ -50,13 +58,12 @@ def update():
     if lastUpdate < cache['forecast_upd']: 
         data['forecast'] = cache['forecast']
     
-    if 'local_info_upd' not in cache:
+    # Needs special treatment because calling local_info_upd() does not garuantee an update
+    if 'local_info_upd' not in cache and 'local_info_upd_requested' not in cache:
         local_info_upd()
-    if lastUpdate < cache['local_info_upd']:
+        cache['local_info_upd_requested'] = True
+    if 'local_info_upd' in cache and lastUpdate < cache['local_info_upd']:
         data['local_info'] = cache['local_info']
-    
-    if 'lights' in cache and ('lights_upd' not in cache or cache['lights_upd'] < lastUpdate):
-        data['lights'] = cache['lights']
     
     return jsonify(data) #!temp
     
@@ -95,6 +102,23 @@ def authorized(response):
 @google.tokengetter
 def get_access_token():
     return session.get('access_token')
+    
+####################
+# Arduino Commands #
+####################
+
+@the_arduino.command('lights_status')
+def upd_lights_status(args):
+    if 'local_info' not in cache:
+        cache['local_info'] = dict()
+    cache['local_info']['light1'] = (int(args[0]) & 0b001 == 0b001)
+    cache['local_info']['light2'] = (int(args[0]) & 0b010 == 0b010)
+    cache['local_info_upd'] = time.time()
+    print 'lights updated '
+    
+###########
+# Updates #
+###########
 
 @sched.interval_schedule(minutes=5)
 def forecast_upd():
@@ -113,6 +137,19 @@ def forecast_upd():
     
     cache['forecast'] = data
     cache['forecast_upd'] = time.time()
+
+@sched.interval_schedule(seconds=1)
+def refresh_arduino():
+    if the_arduino.connected:
+        the_arduino.refresh()
+    else:
+        the_arduino.open()
+        
+        if the_arduino.connected:
+            print "Reconnected arduino"
+        else:
+            print "Failed to reconnect arduino"
+
 
 def local_info_upd():
     the_arduino.send_command('send_status', 'lights')
@@ -252,4 +289,4 @@ def time_btwn(datetime1, datetime2):
     return strval.strip()
 
 if __name__ == "__main__":
-    app.run('0.0.0.0', 5000,debug=True)
+    app.run('0.0.0.0', 5000, debug=True, use_reloader=False) # Reloader doesn't play nice with apscheduler

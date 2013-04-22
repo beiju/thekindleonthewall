@@ -23,10 +23,9 @@ void dummyCmd(unsigned long receivedPattern, unsigned int period) {
 *************************/
 //! Untested, probably has off-by-1 errors
 void statusRequestCmd(Vector<char*> args) {
+  digitalWrite(13, HIGH); //!
   if (strstr(args[0], "lights") != NULL) { // Request for the status of the lights
-    char lightStatusStr[18] = "lights_status ";
-    itoa(lightStatus, lightStatusStr+strlen(lightStatusStr), 2); // last parameter = base (ie base 2 = binary)
-    raspi.write(lightStatusStr);
+    sendLightsStatus();
   }
 }
 
