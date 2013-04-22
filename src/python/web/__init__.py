@@ -65,15 +65,14 @@ def update():
     if 'local_info_upd' in cache and lastUpdate < cache['local_info_upd']:
         data['local_info'] = cache['local_info']
     
-    return jsonify(data) #!temp
-    
-    if ('calendar_upd' not in cache or 
-            cache['calendar_upd'] < lastUpdate or 
-            time.time() - cache['calendar_upd'] > CALENDAR_INTERVAL):
-        data['calendar'] = query_google()
-        if data['calendar'] == True:
-            return redirect(url_for('login'))
+    if 'calendar_upd' not in cache:
+        if not calendar_upd(): # calendar_upd() sets cache[]
+            data['calendar'] = {
+                'error': "Not Authorized -- Visit /login to authorize"
+            }
             print "Unauthorized request for calendar"
+    if ('calendar' not in data or 'error' not in data['calendar']) and lastUpdate < cache['calendar_upd']: 
+        data['calendar'] = cache['calendar']
     
     return jsonify(data)
 
@@ -155,17 +154,18 @@ def local_info_upd():
     the_arduino.send_command('send_status', 'lights')
     # the_arduino.send_command('send_status', 'temperature') # When there's a temp sensor on the arduino, enable this
 
-def query_google():
+@sched.interval_schedule(minutes=5)
+def calendar_upd():
     caldata = dict()
 
     access_token = session.get('access_token')
     if access_token is None:
-        return True
+        return False
     
     access_token = access_token[0]
         
     caldata['daka_hours'] = query_gcal(access_token, '0cto0462lqrpt673m51bf1ucuk%40group.calendar.google.com')
-    if caldata['daka_hours'] == True: return True
+    if caldata['daka_hours'] == True: return False
     caldata['spoon_hours'] = query_gcal(access_token, 'ieqe1kvtb6narapqoafv59umog%40group.calendar.google.com')
 
     caldata['will'] = query_gcals(access_token, '488or1ai5vadl5psti3iq8ipgs%40group.calendar.google.com', # work
@@ -177,9 +177,11 @@ def query_google():
         'jnqo9lo8efm5ogj78pr176qstg%40group.calendar.google.com', # WPI Extracurricular
         'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
         'ianonavy%40gmail.com')
-
+    
+    print 'updating calendar'
+    cache['calendar'] = caldata
     cache['calendar_upd'] = time.time()
-    return caldata
+    return True
 
 def query_gcals(access_token, *calIDs):
     data = dict() 
