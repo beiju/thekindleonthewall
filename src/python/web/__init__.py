@@ -157,31 +157,35 @@ def local_info_upd():
 @sched.interval_schedule(minutes=5)
 def calendar_upd():
     caldata = dict()
-
-    access_token = session.get('access_token')
-    if access_token is None:
-        return False
     
-    access_token = access_token[0]
+    try:
+        access_token = session.get('access_token')
+        if access_token is None:
+            return False
+    
+        access_token = access_token[0]
         
-    caldata['daka_hours'] = query_gcal(access_token, '0cto0462lqrpt673m51bf1ucuk%40group.calendar.google.com')
-    if caldata['daka_hours'] == True: return False
-    caldata['spoon_hours'] = query_gcal(access_token, 'ieqe1kvtb6narapqoafv59umog%40group.calendar.google.com')
+        caldata['daka_hours'] = query_gcal(access_token, '0cto0462lqrpt673m51bf1ucuk%40group.calendar.google.com')
+        if caldata['daka_hours'] == True: return False
+        caldata['spoon_hours'] = query_gcal(access_token, 'ieqe1kvtb6narapqoafv59umog%40group.calendar.google.com')
 
-    caldata['will'] = query_gcals(access_token, '488or1ai5vadl5psti3iq8ipgs%40group.calendar.google.com', # work
-        'beiju.i.am%40gmail.com', # personal
-        't7ijq9al3asosqh1jnp93hvgdk%40group.calendar.google.com') # class
-    caldata['ian'] = query_gcals(access_token, 'sodbfdhm4q7api4qvf5h5k7rlg%40group.calendar.google.com', # social
-        '36gqite9pam369c6mknuttgsqg%40group.calendar.google.com', # work
-        'achgl7e3m1pokdo8o1uqis70fk%40group.calendar.google.com', # ACM
-        'jnqo9lo8efm5ogj78pr176qstg%40group.calendar.google.com', # WPI Extracurricular
-        'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
-        'ianonavy%40gmail.com')
+        caldata['will'] = query_gcals(access_token, '488or1ai5vadl5psti3iq8ipgs%40group.calendar.google.com', # work
+            'beiju.i.am%40gmail.com', # personal
+            't7ijq9al3asosqh1jnp93hvgdk%40group.calendar.google.com') # class
+        caldata['ian'] = query_gcals(access_token, 'sodbfdhm4q7api4qvf5h5k7rlg%40group.calendar.google.com', # social
+            '36gqite9pam369c6mknuttgsqg%40group.calendar.google.com', # work
+            'achgl7e3m1pokdo8o1uqis70fk%40group.calendar.google.com', # ACM
+            'jnqo9lo8efm5ogj78pr176qstg%40group.calendar.google.com', # WPI Extracurricular
+            'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
+            'ianonavy%40gmail.com')
     
-    print 'updating calendar'
-    cache['calendar'] = caldata
-    cache['calendar_upd'] = time.time()
-    return True
+        print 'updating calendar'
+        cache['calendar'] = caldata
+        cache['calendar_upd'] = time.time()
+        return True
+    except RuntimeError:
+        with app.test_request_context('/update'):
+            calendar_upd()
 
 def query_gcals(access_token, *calIDs):
     data = dict() 
@@ -191,10 +195,10 @@ def query_gcals(access_token, *calIDs):
             continue
         if 'current' in currdata and currdata['current'] and 'current' not in data:
             data['current'] = currdata['current']
-            print 'found some current data', data['current']
+
         if 'next' in currdata and currdata['next'] and ('next' not in data or parse(currdata['next']['start_time']) < parse(data['next']['start_time'])):
             data['next'] = currdata['next']
-            print 'found some next data', data['next']
+
             if 'current' in data and 'end_time' in data['current'] and 'start_time' in data['next'] and \
                     abs(parse(data['current']['end_time']) - parse(data['next']['start_time'])) < time.timedelta(minutes=5):
                 data['next']['continuation'] = True
@@ -247,7 +251,6 @@ def query_gcal(access_token, calID):
         
         if 'current' not in data: # Look for the current event
             if startTime < now and endTime > now:
-                print 'Current event: ', item['summary']
                 data['current'] = {
                     'start_time': str(startTime),
                     'start_time_str': startTime.strftime('%I:%M %p'),
@@ -255,10 +258,11 @@ def query_gcal(access_token, calID):
                     'end_time_str': endTime.strftime('%I:%M %p'),
                     'duration': time_btwn(startTime, endTime),
                     'remaining_time': time_btwn(now, endTime),
-                    'event_name': item['summary'],
-                    'event_loc': item['location']
+                    'event_name': item['summary']
                 }
-            else: print 'NOT current event: ', item['summary']
+                if 'location' in item:
+                    data['current']['event_loc'] = item['location']
+
         if 'next' not in data:
             if startTime > now: # The first event for which startTime is after now is 'next', since events are ordered by startTime
                 data['next'] = {
@@ -269,9 +273,11 @@ def query_gcal(access_token, calID):
                     'duration': time_btwn(startTime, endTime),
                     'time_until': time_btwn(startTime, now),
                     'event_name': item['summary'],
-                    'event_loc': item['location'],
                     'continuation': 'current' in data and (abs(startTime - parse(data['current']['end_time'])) < datetime.timedelta(minutes=5))
                 }
+                if 'location' in item:
+                    data['next']['event_loc'] = item['location']
+                
                 
     if 'current' not in data:
         data['current'] = {} # Do this to clear cached result
