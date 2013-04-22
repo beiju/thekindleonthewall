@@ -255,7 +255,8 @@ def query_gcal(access_token, calID):
                     'end_time_str': endTime.strftime('%I:%M %p'),
                     'duration': time_btwn(startTime, endTime),
                     'remaining_time': time_btwn(now, endTime),
-                    'event_name': item['summary']
+                    'event_name': item['summary'],
+                    'event_loc': item['location']
                 }
             else: print 'NOT current event: ', item['summary']
         if 'next' not in data:
@@ -268,6 +269,7 @@ def query_gcal(access_token, calID):
                     'duration': time_btwn(startTime, endTime),
                     'time_until': time_btwn(startTime, now),
                     'event_name': item['summary'],
+                    'event_loc': item['location'],
                     'continuation': 'current' in data and (abs(startTime - parse(data['current']['end_time'])) < datetime.timedelta(minutes=5))
                 }
                 
