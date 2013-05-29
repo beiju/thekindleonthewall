@@ -4,7 +4,7 @@
 
 # Serial configuration
 SIGNATURE = 'Dog'
-FILENAME = '/dev/tty.usbmodem621'
+FILENAME = '/dev/tty.usbmodem1711'
 BAUD = 115200
 TIMEOUT = 1  # seconds
 

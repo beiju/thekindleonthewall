@@ -1,10 +1,13 @@
 // Connected components
-#define RF_TRANSMITTER_PIN 12 // NOTE: Needs to be connected to an interrupt pin (eg. pin 2)
+#define RF_TRANSMITTER_PIN 12 // NOTE: Needs to be connected to an interrupt pin (eg. pin 2) [is this correct?]
 #define RF_RECIEVER_INTERRUPT 0 // interrupt 0 = pin 2
 #define LIGHT_BTN_LED 3
 #define LIGHT_BTN_PIN 4
-#define STATUS_LED_PIN 5
+#define RED_LED_PIN 9
+#define GREEN_LED_PIN 10
+#define BLUE_LED_PIN 11
 #define DEBUG_LED 13
+#define ENABLED_LIGHTS 0b001
 
 // Raspberry Pi Connection Details
 #define DOG_SIGNATURE "Dog"

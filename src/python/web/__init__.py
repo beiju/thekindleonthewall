@@ -68,7 +68,9 @@ def update():
     if 'calendar_upd' not in cache:
         if not calendar_upd(): # calendar_upd() sets cache[]
             data['calendar'] = {
-                'error': "Not Authorized -- Visit /login to authorize"
+                'error': "Google Calendar Not Authorized",
+                'err_code': "not_authorized",
+                'err_note': "Visit /login to authorize"
             }
             print "Unauthorized request for calendar"
     if ('calendar' not in data or 'error' not in data['calendar']) and lastUpdate < cache['calendar_upd']: 
@@ -150,6 +152,7 @@ def refresh_arduino():
             print "Failed to reconnect arduino"
 
 
+@sched.interval_schedule(minutes=1)
 def local_info_upd():
     the_arduino.send_command('send_status', 'lights')
     # the_arduino.send_command('send_status', 'temperature') # When there's a temp sensor on the arduino, enable this
@@ -229,7 +232,8 @@ def query_gcal(access_token, calID):
         if e.code == 403: 
             return {
                 'error': "403 Forbidden", 
-                'note': "This error is often caused by sending an API request from an IP address not included in https://code.google.com/apis/console",
+                'err_code': "api_403",
+                'err_note': "This error is often caused by sending an API request from an IP address not included in https://code.google.com/apis/console",
                 'url': url
             }
         res = urlopen(req) 

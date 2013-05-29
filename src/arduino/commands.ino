@@ -21,9 +21,7 @@ void dummyCmd(unsigned long receivedPattern, unsigned int period) {
 /*************************
 * Status Screen commands *
 *************************/
-//! Untested, probably has off-by-1 errors
 void statusRequestCmd(Vector<char*> args) {
-  digitalWrite(13, HIGH); //!
   if (strstr(args[0], "lights") != NULL) { // Request for the status of the lights
     sendLightsStatus();
   }
@@ -34,17 +32,20 @@ void statusRequestCmd(Vector<char*> args) {
 ******************/
 
 void lightsCmd(Vector<char*> args) {
-  // Pattern: 00BBCCAA00 where A, B, C is the on/off state of lights 1, 2, and 3 (11 = on, 00 = off)
   int lightsCode = 0;
-  if (strstr(args[0], "on") != NULL) lightsCode &= 0b001;
-  if (strstr(args[1], "on") != NULL) lightsCode &= 0b010;
-  if (strstr(args[2], "on") != NULL) lightsCode &= 0b100;
+  if (strstr(args[0], "on") != NULL) lightsCode |= 0b001;
+  if (strstr(args[1], "on") != NULL) lightsCode |= 0b010;
+  if (strstr(args[2], "on") != NULL) lightsCode |= 0b100;
+  lightsCode &= ENABLED_LIGHTS; // Leave disabled lights alone
+  
+  lights.sendSignal(lightsCode);
+  lightStatus ^= lightsCode; // a = a^b toggles bits in a that correspond to a 1 in b, leaves the others alone
 }
 
 void lightsDoorwayButton() {
   if (lightStatus == 0) { // if lights are off
-    lights.sendSignal(0b011); // turn them all on (except 3--disabled)
-    lightStatus = 0b011; // theoretically all are on now (except 3--disabled)
+    lights.sendSignal(ENABLED_LIGHTS); // turn them all on (except disabled)
+    lightStatus = ENABLED_LIGHTS; // theoretically enabled lights all are on now
   } else { // if lights are on
     lights.sendSignal(lightStatus); // turn off all the ones that are on
     lightStatus = 0b000; // theoretically all are off now
@@ -54,7 +55,7 @@ void lightsDoorwayButton() {
 //  IMPORTANT: Don't try to print anything in this function. It's called by an interrupt, so it will
 //  make the code crash
 void rfSignalRecievedCmd(unsigned long receivedPattern, unsigned int period) {
-   // Send light signal only if it's not a repeat or enough time has elapsed
+   // Send light signal only if it's NOT a repeat or enough time has elapsed
   if (millis() - previousLightTime > MAX_TIME_BEFORE_REPEAT_PULSE || receivedPattern != previousLightSignal) {
     queuedPattern = receivedPattern; // Register this code to be processed after the interrupt ends
   }
@@ -63,9 +64,19 @@ void rfSignalRecievedCmd(unsigned long receivedPattern, unsigned int period) {
 }
 
 void lightStatusCorrectionCmd(Vector<char*> args) {
+  lightStatus = 0;
   if (strstr(args[0], "on") != NULL) lightStatus |= 0b001;
   if (strstr(args[1], "on") != NULL) lightStatus |= 0b010;
   if (strstr(args[2], "on") != NULL) lightStatus |= 0b100;
-  debug.info("Light status corrected, new status should be %s, %s, %s", args[0], args[1], args[2]);
+  debug.info("Light status corrected, new status: %s, %s, %s", BITWISE_STATUS(lightStatus));
 }
 
+/********************
+* Calendar Commands *
+********************/
+
+void calInfoCmd(Vector<char*> args) {
+  if (strstr(args[0], "will_nextevent_millis") != NULL) {
+    nextEventTime_Will = millis() + int(args[1]);
+  }
+}

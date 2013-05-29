@@ -19,3 +19,8 @@ unsigned short lightStatus;
 volatile unsigned long previousLightSignal = 0;
 volatile unsigned long previousLightTime = 0;
 volatile unsigned long queuedPattern = 0;
+
+float statusColors[3] = {.5, .5, .5};
+unsigned long nextEventTime_Will;
+const long millis_15min = 15*60*1000;
+boolean debugFlag = false;

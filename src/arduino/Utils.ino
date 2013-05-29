@@ -1,6 +1,6 @@
-void breatheLED(int pin) {
+void breatheLED(int pin, float strength=1) {
   // The value inside sin() controls speed, the multiplier at the end determines luminousity
-  float val = (exp(sin(millis()/2000.0*PI)) - 0.36787944)*108.0;
+  float val = (exp(sin(millis()/2000.0*PI)) - 0.36787944)*108.0 * strength;
   analogWrite(pin, val);
 }
 
@@ -17,8 +17,7 @@ void processQueuedPatterns() {
   // XOR toggles all bits in lightStatus where signal has a 1, leaves the rest alone
   lightStatus ^= signal;
   debug.info("Toggled lights with signal `%s %s %s`, new status `%s, %s, %s`", 
-    BIT_ON(signal, 0b001), BIT_ON(signal, 0b010), BIT_ON(signal, 0b100),
-    BIT_ON(lightStatus, 0b001), BIT_ON(lightStatus, 0b010), BIT_ON(lightStatus, 0b100));
+    BITWISE_STATUS(signal), BITWISE_STATUS(lightStatus));
   
   sendLightsStatus(); // Update the raspberry pi
 }

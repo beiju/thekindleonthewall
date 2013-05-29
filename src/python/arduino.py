@@ -48,11 +48,11 @@ class Arduino:
                     else:
                         valid, command, args = self.parse_command(self.message)
                         if not valid:
-                            print "Recieved invalid message:", self.message
+                            print "arduino.py recieved invalid message:", self.message
                         elif command in self.commands:
                             self.commands[command](args)
                         else:
-                            print "Recieved unknown command:", command, "args:", args
+                            print "arduino.py recieved unknown command:", command, "args:", args
                     self.message = ""
         except IOError:
             self.connected = False
@@ -61,7 +61,7 @@ class Arduino:
     def send_raw_command(self, raw_command):
         if self.connected:
             checksum = Utils.checksum(raw_command)
-            output = '%s %s %s\r\n' % (self.signature, raw_command, checksum)
+            output = '%s %s %s\r' % (self.signature, raw_command, checksum)
             print output
             self.com.write(output)
         
@@ -96,13 +96,7 @@ class Arduino:
 
     def open(self):
         try:
-            self.com.open()
+            self.com = serial.Serial(self.filename, self.baud, timeout=self.timeout)
             self.connected = True
-        except AttributeError:
-            try:
-                self.com = serial.Serial(self.filename, self.baud, timeout=self.timeout)
-                self.connected = True
-            except serial.serialutil.SerialException:
-                self.connected = False
         except serial.serialutil.SerialException:
             self.connected = False
