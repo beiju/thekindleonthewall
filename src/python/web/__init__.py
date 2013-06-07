@@ -42,7 +42,7 @@ else:
 ##########
 # Routes #
 ##########
-    
+
 @app.route('/')
 def index():
     print 'connected', the_arduino.connected #!
@@ -148,8 +148,6 @@ def refresh_arduino():
         
         if the_arduino.connected:
             print "Reconnected arduino"
-        else:
-            print "Failed to reconnect arduino"
 
 
 @sched.interval_schedule(minutes=1)
@@ -189,6 +187,10 @@ def calendar_upd():
     except RuntimeError:
         with app.test_request_context('/update'):
             calendar_upd()
+            
+####################
+# Helper Functions #
+####################
 
 def query_gcals(access_token, *calIDs):
     data = dict() 
@@ -301,6 +303,10 @@ def time_btwn(datetime1, datetime2):
     elif minutes != 0: 
         strval += str(minutes)+' minutes '
     return strval.strip()
+
+########
+# Init #
+########
 
 if __name__ == "__main__":
     app.run('0.0.0.0', 5000, debug=True, use_reloader=False) # Reloader doesn't play nice with apscheduler

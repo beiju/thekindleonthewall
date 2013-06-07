@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Kindle Status Screen</title>
+	
+	<link rel="stylesheet" href="/static/jquery.gridster.min.css" type="text/css" />
+	<link rel="stylesheet" href="/static/style.css" type="text/css" />
+  
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body ng-app>
+	<section id="notifications"><h1 data-fill="notification.title">Notifications</h1><p class="invisible" data-fill="notification.body"></p></section>
+  <div class="gridster">
+    <ul>
+      <!-- Info (top row) -->
+      <li data-row="1" data-col="3" data-sizex="4" data-sizey="2" id="time" class="invisible" data-fill="time">00:00</li>
+  		<li data-row="1" data-col="1" data-sizex="2" data-sizey="4" id="weather">
+  			<h1 class="label invisible" data-visible-if="forecast.current">Currently: </h1>
+  			<p id="weather_currently" class="invisible" data-fill="forecast.current"></p>            
+  			<h1 class="label invisible" data-visible-if="forecast.next">Next: </h1>                          
+  			<p id="weather_next" class="invisible" data-fill="forecast.next"></p>
+  			<h1 class="label invisible" data-visible-if="forecast.later">Later: </h1>
+  			<p id="weather_later" class="invisible" data-fill="forecast.later"></p>
+  		</li>                                                    
+  		<li data-row="1" data-col="7" data-sizex="2" data-sizey="2" id="temperature">
+  			<p data-visible-if="forecast.temp_f" class="invisible"><span id="fahrenheit" data-fill="forecast.temp_f">00</span> <span class="secondary">&deg;F</span></p>
+  			<p data-visible-if="forecast.temp_c" class="invisible"><span id="celsius" data-fill="forecast.temp_c">00</span> <span class="secondary">&deg;C</span></p>
+  		</li>
+      
+      <!-- Buttons -->
+      <li data-row="5" data-col="1" data-sizex="2" data-sizey="3" id="buttons">
+        <button class="off" id="light1" data-class-if="lights.light1 ? on : off">Light 1</button>
+        <button class="off" id="light2" data-class-if="lights.light2 ? on : off">Light 2</button>
+      </li>
+      
+      <!-- Dining -->
+    	<li data-row="3" data-col="3" data-sizex="6" data-sizey="1" id="dining">
+    		<p id="daka" class="invisible">
+          <span data-display-if="calendar.daka_hours.current">
+            Daka is open for <span data-fill="calendar.daka_hours.current.event_name"></span> and will 
+              <span data-display-if="calendar.daka_hours.next.continuation">open for <span data-fill="calendar.daka_hours.next.event_name"></span></span>
+              <span data-display-ifnot="calendar.daka_hours.next.continutation">close</span>
+            in <span data-fill="calendar.daka_hours.current.remaining_time"></span>
+          </span>
+          <span data-display-ifnot="calendar.daka_hours.current">
+            Daka is closed<span data-display-if="calendard.aka_hours.next"> and will reopen for <span data-fill="calendar.daka_hours.next.event_name"></span> in <span data-fill="calendar.daka_hours.next.time_until"></span>
+          </span>
+            
+          <span data-display-if="calendar.spoon_hours.current">
+            The Spoon is open for <span data-fill="calendar.spoon_hours.current.event_name"></span> and will 
+              <span data-display-if="calendar.spoon_hours.next.continuation">open for <span data-fill="calendar.spoon_hours.next.event_name"></span></span>
+              <span data-display-ifnot="calendar.spoon_hours.next.continutation">close</span>
+            in <span data-fill="calendar.spoon_hours.current.remaining_time"></span>
+          </span>
+          <span data-display-ifnot="calendar.spoon_hours.current">
+            The Spoon is closed<span data-display-if="calendard.aka_hours.next"> and will reopen for <span data-fill="calendar.spoon_hours.next.event_name"></span> in <span data-fill="calendar.spoon_hours.next.time_until"></span>
+          </span>
+    	</li>
+      
+      <!-- Will -->
+      <li data-row="4" data-col="3" data-sizex="3" data-sizey="1" class="will"><h1>Will</h1></li>
+  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="2" class="will location">
+        <span data-display-if="calendar.will.current">
+          <h3>Current location</h3>
+    			<p class="place invisible" data-fill="calendar.will.current.event_loc">Location Unknown</p>
+    			<p class="activity invisible" data-fill="calendar.will.current.event_title">Unknown</p>
+        </span>
+        <span data-display-ifnot="calendar.will.current">
+          <h3>Next location</h3>
+    			<p class="place invisible" data-fill="calendar.will.next.event_loc">Location Unknown</p>
+    			<p class="activity invisible" data-fill="calendar.will.next.event_title">Unknown</p>
+        </span>
+  		</li>
+			<li data-row="7" data-col="3" data-sizex="1" data-sizey="1" class="will meals normal-meals">
+				<input class="dial number" type="text" value="0" data-fill-attr="meals.will.normal value" />
+				<input class="dial days" type="text" value="0" data-fill-attr="meals.will.days value" />
+				<p>Meals</p>
+			</li>
+			<li data-row="7" data-col="4" data-sizex="1" data-sizey="1" class="will meals special-meals">
+				<input class="dial fill number" type="text" value="0" data-fill-attr="meals.will.special value" />
+				<input class="dial fill days" type="text" value="0" data-fill-attr="meals.will.days value" />
+				<p>Special Meals</p>
+			</li>
+			<li data-row="7" data-col="5" data-sizex="1" data-sizey="1" class="will meals bonus-points">
+				<input class="dial fill number" type="text" value="0" data-fill-attr="meals.will.bonus value" />
+				<input class="dial fill days" type="text" value="0" data-fill-attr="meals.will.days value" />
+				<p>Bonus Points</p>
+			</li>
+      
+      <!-- Ian -->
+      <li data-row="4" data-col="3" data-sizex="3" data-sizey="1" class="ian"><h1>Ian</h1></li>
+  		<li data-row="5" data-col="3" data-sizex="3" data-sizey="2" class="ian location">
+        <span data-display-if="calendar.ian.current">
+          <h3>Current location</h3>
+    			<p class="place invisible" data-fill="calendar.ian.current.event_loc">Location Unknown</p>
+    			<p class="activity invisible" data-fill="calendar.ian.current.event_title">Unknown</p>
+        </span>
+        <span data-display-ifnot="calendar.ian.current">
+          <h3>Next location</h3>
+    			<p class="place invisible" data-fill="calendar.ian.next.event_loc">Location Unknown</p>
+    			<p class="activity invisible" data-fill="calendar.ian.next.event_title">Unknown</p>
+        </span>
+  			
+  		</li>
+			<li data-row="7" data-col="3" data-sizex="1" data-sizey="1" class="ian meals normal-meals">
+				<input class="dial number" type="text" value="0" data-fill-attr="meals.ian.normal value" />
+				<input class="dial days" type="text" value="0" data-fill-attr="meals.ian.days value" />
+				<p>Meals</p>
+			</li>
+			<li data-row="7" data-col="4" data-sizex="1" data-sizey="1" class="ian meals special-meals">
+				<input class="dial fill number" type="text" value="0" data-fill-attr="meals.ian.special value" />
+				<input class="dial fill days" type="text" value="0" data-fill-attr="meals.ian.days value" />
+				<p>Special Meals</p>
+			</li>
+			<li data-row="7" data-col="5" data-sizex="1" data-sizey="1" class="ian meals bonus-points">
+				<input class="dial fill number" type="text" value="0" data-fill-attr="meals.ian.bonus value" />
+				<input class="dial fill days" type="text" value="0" data-fill-attr="meals.ian.days value" />
+				<p>Bonus Points</p>
+			</li>
+    </ul>
+  </div>
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/1.7.2/moment.min.js" type="text/javascript"></script>
+	<script src="/static/jquery.gridster.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js" type="text/javascript"></script>
+	<script src="/static/jquery.knob.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="/static/script.js"></script>
+	<script src="/static/data.js"></script>
+	<script src="https://apis.google.com/js/auth.js?onload=update" type="text/javascript"></script>
+	<script>try {
+		kindle.dev.setOrientation("landscape");
+	} catch (e) {}</script>
+</body>
+</html>
