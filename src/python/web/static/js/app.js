@@ -1,4 +1,4 @@
-var thekindleonthewall = angular.module('thekindleonthewall', ['ui.state']);
+var thekindleonthewall = angular.module('thekindleonthewall', ['StateManager', 'be.poller']);
 
 thekindleonthewall.constant('config', {
 	'autoTransitionDelay': 5000,
