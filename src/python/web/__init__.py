@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from settings import *
 import logging
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 logging.basicConfig() # used by apscheduler
 sched = Scheduler()
 sched.start()
@@ -46,7 +46,7 @@ else:
 @app.route('/')
 def index():
     print 'connected', the_arduino.connected #!
-    return render_template('index.html')
+    return app.send_static_file('index.html')
     
 @app.route('/update')
 def update():   
@@ -97,7 +97,8 @@ def login():
 def authorized(response):
     access_token = response['access_token']
     session['access_token'] = access_token, ''
-    return redirect(url_for('update'))
+    return redirect(url_for('index'))
+
 
 
 @google.tokengetter
@@ -180,7 +181,7 @@ def calendar_upd():
             'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
             'ianonavy%40gmail.com')
     
-        print 'updating calendar'
+        print 'Updating calendar'
         cache['calendar'] = caldata
         cache['calendar_upd'] = time.time()
         return True

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	
+	<title>The Kindle On The Wall</title>
+	
+	<base href="/"></base>
+	
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body ng-app="thekindleonthewall" ng-controller="MainController">
+	<nav id="tabs">
+		<a href="#/auto/{{$state.current.name}}">Auto</a>
+		<a href="#/personal-info">Personal Info</a>
+		<a href="#/general-info">General Info</a>
+	</nav>
+	
+	<section ui-view="main"></section>
+	<h1>Data</h1>
+	<code> {{ data | json }}</code>
+	{{ lastUpdate }}
+	
+	<script type="text/ng-template" id="personal-info.html">
+	    <p>Personal Info</p>
+	</script>
+	
+	<script type="text/ng-template" id="general-info.html">
+	    <p>General Info</p>
+	</script>
+	
+	<script type="text/ng-template" id="auto.html">
+		<p>Auto (next: {{$state.current.data.nextView}})</p>
+	    <div ui-view="main"></div>
+	    <code> {{$state}} </code>
+	    <code> {{$stateParams}} </code>
+	</script>
+	
+	<script type="text/javascript" src="components/underscore/underscore.js"></script>
+	<script type="text/javascript" src="components/angular/angular.js"></script>
+	<script type="text/javascript" src="components/ui-router/release/angular-ui-router.js"></script>
+	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript" src="js/poller.js"></script>
+	<script type="text/javascript" src="js/states.js"></script>
+</body>
+</html>
