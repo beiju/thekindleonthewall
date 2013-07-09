@@ -1,7 +1,7 @@
 from flask import Flask, request, g, render_template, redirect, url_for, session, jsonify, json
 from apscheduler.scheduler import Scheduler
 from flask_oauth import OAuth
-from forecastio import Forecast
+from forecastio import *
 import room_controller.arduino
 import time
 import pytz
@@ -16,7 +16,7 @@ sched = Scheduler()
 sched.start()
 app.secret_key = GOOGLE_SECRET_KEY
 
-forecast = Forecast(FORECAST_API, FORECAST_UNITS, FORECAST_LAT, FORECAST_LONG)
+forecast = Forecastio(FORECAST_API)
 
 oauth = OAuth()
 google = oauth.remote_app('google',
@@ -49,14 +49,12 @@ def index():
     return app.send_static_file('index.html')
     
 @app.route('/update')
-def update():   
+def update():
     lastUpdate = float(request.args.get('lastUpdate') or 0)
     data = dict()
     
-    if 'forecast_upd' not in cache:
-        forecast_upd()
-    if lastUpdate < cache['forecast_upd']: 
-        data['forecast'] = cache['forecast']
+    data['weather'] = retrieve_cached('weather', lastUpdate, forecast_upd)
+    if data['weather'] == None: del data['weather']
     
     # Needs special treatment because calling local_info_upd() does not garuantee an update
     if 'local_info_upd' not in cache and 'local_info_upd_requested' not in cache:
@@ -65,16 +63,18 @@ def update():
     if 'local_info_upd' in cache and lastUpdate < cache['local_info_upd']:
         data['local_info'] = cache['local_info']
     
-    if 'calendar_upd' not in cache:
-        if not calendar_upd(): # calendar_upd() sets cache[]
-            data['calendar'] = {
-                'error': "Google Calendar Not Authorized",
-                'err_code': "not_authorized",
-                'err_note': "Visit /login to authorize"
-            }
-            print "Unauthorized request for calendar"
-    if ('calendar' not in data or 'error' not in data['calendar']) and lastUpdate < cache['calendar_upd']: 
-        data['calendar'] = cache['calendar']
+    # if 'calendar_upd' not in cache:
+    #     if not calendar_upd(): # calendar_upd() sets cache[]
+    #         data['calendar'] = {
+    #             'error': "Google Calendar Not Authorized",
+    #             'err_code': "not_authorized",
+    #             'err_note': "Visit /login to authorize"
+    #         }
+    #         print "Unauthorized request for calendar"
+    # if ('calendar' not in data or 'error' not in data['calendar']) and lastUpdate < cache['calendar_upd']: 
+    #     data['calendar'] = cache['calendar']
+    
+    #print cache
     
     return jsonify(data)
 
@@ -85,21 +85,23 @@ def run_command():
     the_arduino.send_raw_command(command)
     print 'command', command
     return redirect(url_for('run'))
+
+@app.route('/clear')
+def clearCache():
+    cache.clear()
+    return redirect(url_for('index'))    
     
 @app.route('/login')
 def login():
     callback=url_for('authorized', _external=True)
     return google.authorize(callback=callback)
 
-    
 @app.route(GOOGLE_REDIRECT_URI)
 @google.authorized_handler
 def authorized(response):
     access_token = response['access_token']
     session['access_token'] = access_token, ''
     return redirect(url_for('index'))
-
-
 
 @google.tokengetter
 def get_access_token():
@@ -125,20 +127,59 @@ def upd_lights_status(args):
 @sched.interval_schedule(minutes=5)
 def forecast_upd():
     print "Updating forecast"
-    forecast.get_forecast()
-    data = dict()
+    forecast.load_forecast(FORECAST_LAT, FORECAST_LONG, units=FORECAST_UNITS, callback=forecast_respond)
+
+def forecast_respond(forecastInst, result):
+    if 'response' in result: 
+        response = result['response']
+        data = {}
+        
+        currently = forecast.get_currently()
+        minutely = forecast.get_minutely()
+        hourly = forecast.get_hourly()
+        daily = forecast.get_daily()
+        data = {
+            'current': {
+                'icon': currently.icon,
+                'description': currently.summary,
+                'temperature': {
+                    'c': currently.temperature,
+                    'f': currently.temperature * 9 / 5 + 32
+                },
+                'wind': {
+                    'speed': currently.windspeed,
+                    'angle': currently.windbaring # Typo in the library
+                }
+            },
+            'next_hr': {
+                'icon': minutely.icon,
+                'description': minutely.summary
+            },
+            'tomorrow': {
+                'icon': hourly.icon,
+                'description': hourly.summary
+            },
+            'this_week': {
+                'icon': daily.icon,
+                'description': daily.summary
+            }
+        }
     
-    if 'current' in forecast.forecast: 
-        data['temp_c'] = forecast.current['temperature']
-        data['temp_f'] = 32 + 9 / 5 * forecast.current['temperature']
-        data['wind_speed'] = forecast.current['windSpeed']
-        data['wind_dir'] = forecast.current['windBearing']
-    if 'minutely' in forecast.forecast: data['current'] = forecast.nexthour['summary']
-    if 'hourly' in forecast.forecast: data['next'] = forecast.hourly['summary']
-    if 'daily' in forecast.forecast: data['later'] = forecast.daily['summary']
+        # data['raw'] = dict()
+        # data['raw']['forecast'] = forecast.forecast
+        # if 'current' in forecast.forecast: data['raw']['current'] = forecast.current
+        # if 'minutely' in forecast.forecast: data['raw']['nexthour'] = forecast.nexthour
+        # if 'hourly' in forecast.forecast: data['raw']['hourly'] = forecast.hourly
+        # if 'daily' in forecast.forecast: data['raw']['daily'] = forecast.daily
+        #     
+        # data['current'] = forecast.current
+        # if 'minutely' in forecast.forecast: data['current'] = forecast.nexthour['summary']
+        # if 'hourly' in forecast.forecast: data['next'] = forecast.hourly['summary']
+        # if 'daily' in forecast.forecast: data['later'] = forecast.daily['summary']
     
-    cache['forecast'] = data
-    cache['forecast_upd'] = time.time()
+        if 'weather' not in cache: cache['weather'] = dict()
+        cache['weather']['data'] = data
+        cache['weather']['last_update'] = time.time()
 
 @sched.interval_schedule(seconds=1)
 def refresh_arduino():
@@ -192,6 +233,19 @@ def calendar_upd():
 ####################
 # Helper Functions #
 ####################
+
+def retrieve_cached(name, since, getter):
+    if name not in cache: cache[name] = dict()
+
+    if 'data' not in cache[name]:
+        if 'last_request' not in cache[name] or cache[name]['last_request'] + 5 < time.time():
+            getter()
+            cache[name]['last_request'] = time.time()
+
+    if 'data' in cache[name] and ('last_update' not in cache[name] or cache[name]['last_update'] > since):
+        return cache[name]['data']
+
+    return None
 
 def query_gcals(access_token, *calIDs):
     data = dict() 
@@ -260,9 +314,7 @@ def query_gcal(access_token, calID):
             if startTime < now and endTime > now:
                 data['current'] = {
                     'start_time': str(startTime),
-                    'start_time_str': startTime.strftime('%I:%M %p'),
                     'end_time': str(endTime),
-                    'end_time_str': endTime.strftime('%I:%M %p'),
                     'duration': time_btwn(startTime, endTime),
                     'remaining_time': time_btwn(now, endTime),
                     'event_name': item['summary']
@@ -274,9 +326,7 @@ def query_gcal(access_token, calID):
             if startTime > now: # The first event for which startTime is after now is 'next', since events are ordered by startTime
                 data['next'] = {
                     'start_time': str(startTime),
-                    'start_time_str': startTime.strftime('%I:%M %p'),
                     'end_time': str(endTime),
-                    'end_time_str': endTime.strftime('%I:%M %p'),
                     'duration': time_btwn(startTime, endTime),
                     'time_until': time_btwn(startTime, now),
                     'event_name': item['summary'],

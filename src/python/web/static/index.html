@@ -11,36 +11,80 @@
 </head>
 <body ng-app="thekindleonthewall" ng-controller="MainController">
 	<nav id="tabs">
-		<a href="#/auto/{{$state.current.name}}">Auto</a>
-		<a href="#/personal-info">Personal Info</a>
-		<a href="#/general-info">General Info</a>
+		<div class="routes" ng-controller="StateController">
+			<label><input type="checkbox" name="auto" ng-model="auto" />Auto</label>
+			<a href="#/personal-info">Personal Info</a>
+			<a href="#/general-info">General Info</a>
+		</div>
+		<div class="gadgets" ng-controller="GadgetsController">
+			<a be-gadget="lights[0]">Light 1</a>
+			<a be-gadget="lights[1]">Light 2</a>
+			<a be-gadget="fan">Fan</a>
+		</div>
 	</nav>
 	
 	<section ui-view="main"></section>
 	<h1>Data</h1>
-	<code> {{ data | json }}</code>
-	{{ lastUpdate }}
+	<pre> {{ data | json }}</pre>
 	
 	<script type="text/ng-template" id="personal-info.html">
-	    <p>Personal Info</p>
+		<p>Personal Info</p>
 	</script>
 	
 	<script type="text/ng-template" id="general-info.html">
-	    <p>General Info</p>
-	</script>
-	
-	<script type="text/ng-template" id="auto.html">
-		<p>Auto (next: {{$state.current.data.nextView}})</p>
-	    <div ui-view="main"></div>
-	    <code> {{$state}} </code>
-	    <code> {{$stateParams}} </code>
+	    <section id="time" ng-show="times">
+	    	<h1 class="time local">{{ times.local }}</h1>
+	    	<aside class="remote">
+	    		<h2 class="location">{{ times.remote_label }}</h2>
+	    		<h1 class="time">{{ times.remote }}</h1>
+	    	</aside>
+	    </section>
+	    
+	    <section id="weather" ng-show="data.weather">
+	    	<section id="weather-warning" ng-show="{{ data.weather.warnings }}">
+	    		<img class="icon" <!--src="img/weather-warning.png"--> />
+	    		<h1 class="warning">{{ data.weather.warnings.warning }}</h1>
+	    	</section>
+	    	<section id="now">
+	    		<!-- TODO: Width and height -->
+	    		<canvas skycons-icon="{{ data.weather.current.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.current.description }}</p>
+	    		<p class="temp">
+	    			<span class="farenheit">{{ data.weather.current.temperature.c }}</span>
+	    			<span class="units">&deg;C</span> / 
+	    			<span class="celsuis">{{ data.weather.current.temperature.f }}</span>
+	    			<span class="units">&deg;F</span>
+	    		</p>
+	    		<p class="wind">
+	    			<span style="-webkit-transform: rotate(-{{ data.weather.current.wind.angle }}deg)">&#10146;</span>
+	    			<span class="speed">{{ data.weather.current.wind.speed }}</span>
+	    			<span class="units">mph</span>
+	    		</p>
+	    	</section>
+	    	<section id="later">
+	    		<!-- TODO: Width and height -->
+	    		<h1>Next Hour</h1>
+	    		<canvas skycons-icon="{{ data.weather.next_hr.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.next_hr.description }}</p>
+	    		<h1>Tomorrow</h1>
+	    		<canvas skycons-icon="{{ data.weather.tomorrow.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.tomorrow.description }}</p>
+	    		<h1>This Week</h1>
+	    		<canvas skycons-icon="{{ data.weather.this_week.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.this_week.description }}</p>
+	    	</section>
+	    </section>
+	    
 	</script>
 	
 	<script type="text/javascript" src="components/underscore/underscore.js"></script>
 	<script type="text/javascript" src="components/angular/angular.js"></script>
 	<script type="text/javascript" src="components/ui-router/release/angular-ui-router.js"></script>
+	<script type="text/javascript" src="components/skycons/skycons.js"></script>
+	<script type="text/javascript" src="js/gadgets.js"></script>
 	<script type="text/javascript" src="js/poller.js"></script>
 	<script type="text/javascript" src="js/states.js"></script>
+	<script type="text/javascript" src="js/skycons.js"></script>
 	<script type="text/javascript" src="js/app.js"></script>
 </body>
 </html>
