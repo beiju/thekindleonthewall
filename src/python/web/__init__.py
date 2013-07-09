@@ -9,6 +9,7 @@ import datetime
 from dateutil.parser import parse
 from settings import *
 import logging
+import threading
 
 app = Flask(__name__, static_url_path='')
 logging.basicConfig() # used by apscheduler
@@ -53,29 +54,16 @@ def update():
     lastUpdate = float(request.args.get('lastUpdate') or 0)
     data = dict()
     
-    data['weather'] = retrieve_cached('weather', lastUpdate, forecast_upd)
-    if data['weather'] == None: del data['weather']
+    sources = [
+        ('weather', forecast_upd),
+        ('local_info', local_info_upd),
+        ('calendar', calendar_upd)
+    ]
     
-    # Needs special treatment because calling local_info_upd() does not garuantee an update
-    if 'local_info_upd' not in cache and 'local_info_upd_requested' not in cache:
-        local_info_upd()
-        cache['local_info_upd_requested'] = True
-    if 'local_info_upd' in cache and lastUpdate < cache['local_info_upd']:
-        data['local_info'] = cache['local_info']
-    
-    # if 'calendar_upd' not in cache:
-    #     if not calendar_upd(): # calendar_upd() sets cache[]
-    #         data['calendar'] = {
-    #             'error': "Google Calendar Not Authorized",
-    #             'err_code': "not_authorized",
-    #             'err_note': "Visit /login to authorize"
-    #         }
-    #         print "Unauthorized request for calendar"
-    # if ('calendar' not in data or 'error' not in data['calendar']) and lastUpdate < cache['calendar_upd']: 
-    #     data['calendar'] = cache['calendar']
-    
-    #print cache
-    
+    for item in sources:
+        data[ item[0] ] = retrieve_cached(item[0], lastUpdate, item[1])
+        if data[ item[0] ] is None: del data[ item[0] ]
+        
     return jsonify(data)
 
 @app.route('/run', methods=['POST'])
@@ -93,6 +81,7 @@ def clearCache():
     
 @app.route('/login')
 def login():
+    cache['calendar']['data']['err_code'] = "pending_authorization" # Avoid endless redirects
     callback=url_for('authorized', _external=True)
     return google.authorize(callback=callback)
 
@@ -101,6 +90,9 @@ def login():
 def authorized(response):
     access_token = response['access_token']
     session['access_token'] = access_token, ''
+    print access_token
+    if 'calendar' in cache: 
+        del cache['calendar'] # Update the calendar the next time it's requested
     return redirect(url_for('index'))
 
 @google.tokengetter
@@ -124,63 +116,6 @@ def upd_lights_status(args):
 # Updates #
 ###########
 
-@sched.interval_schedule(minutes=5)
-def forecast_upd():
-    print "Updating forecast"
-    forecast.load_forecast(FORECAST_LAT, FORECAST_LONG, units=FORECAST_UNITS, callback=forecast_respond)
-
-def forecast_respond(forecastInst, result):
-    if 'response' in result: 
-        response = result['response']
-        data = {}
-        
-        currently = forecast.get_currently()
-        minutely = forecast.get_minutely()
-        hourly = forecast.get_hourly()
-        daily = forecast.get_daily()
-        data = {
-            'current': {
-                'icon': currently.icon,
-                'description': currently.summary,
-                'temperature': {
-                    'c': currently.temperature,
-                    'f': currently.temperature * 9 / 5 + 32
-                },
-                'wind': {
-                    'speed': currently.windspeed,
-                    'angle': currently.windbaring # Typo in the library
-                }
-            },
-            'next_hr': {
-                'icon': minutely.icon,
-                'description': minutely.summary
-            },
-            'tomorrow': {
-                'icon': hourly.icon,
-                'description': hourly.summary
-            },
-            'this_week': {
-                'icon': daily.icon,
-                'description': daily.summary
-            }
-        }
-    
-        # data['raw'] = dict()
-        # data['raw']['forecast'] = forecast.forecast
-        # if 'current' in forecast.forecast: data['raw']['current'] = forecast.current
-        # if 'minutely' in forecast.forecast: data['raw']['nexthour'] = forecast.nexthour
-        # if 'hourly' in forecast.forecast: data['raw']['hourly'] = forecast.hourly
-        # if 'daily' in forecast.forecast: data['raw']['daily'] = forecast.daily
-        #     
-        # data['current'] = forecast.current
-        # if 'minutely' in forecast.forecast: data['current'] = forecast.nexthour['summary']
-        # if 'hourly' in forecast.forecast: data['next'] = forecast.hourly['summary']
-        # if 'daily' in forecast.forecast: data['later'] = forecast.daily['summary']
-    
-        if 'weather' not in cache: cache['weather'] = dict()
-        cache['weather']['data'] = data
-        cache['weather']['last_update'] = time.time()
-
 @sched.interval_schedule(seconds=1)
 def refresh_arduino():
     if the_arduino.connected:
@@ -191,25 +126,71 @@ def refresh_arduino():
         if the_arduino.connected:
             print "Reconnected arduino"
 
+@sched.interval_schedule(minutes=5)
+def forecast_upd():
+    print "Updating forecast"
+    forecast.load_forecast(FORECAST_LAT, FORECAST_LONG, units=FORECAST_UNITS)
+
+    currently = forecast.get_currently()
+    minutely = forecast.get_minutely()
+    hourly = forecast.get_hourly()
+    daily = forecast.get_daily()
+    data = {
+        'current': {
+            'icon': currently.icon,
+            'description': currently.summary,
+            'temperature': {
+                'c': currently.temperature,
+                'f': currently.temperature * 9 / 5 + 32
+            },
+            'wind': {
+                'speed': currently.windspeed,
+                'angle': currently.windbaring # Typo in the library
+            }
+        },
+        'next_hr': {
+            'icon': minutely.icon,
+            'description': minutely.summary
+        },
+        'tomorrow': {
+            'icon': hourly.icon,
+            'description': hourly.summary
+        },
+        'this_week': {
+            'icon': daily.icon,
+            'description': daily.summary
+        }
+    }
+
+    if 'weather' not in cache: cache['weather'] = dict()
+    cache['weather']['data'] = data
+    cache['weather']['last_update'] = time.time()
 
 @sched.interval_schedule(minutes=1)
 def local_info_upd():
+    print "Updating Local Info"
     the_arduino.send_command('send_status', 'lights')
     # the_arduino.send_command('send_status', 'temperature') # When there's a temp sensor on the arduino, enable this
 
 @sched.interval_schedule(minutes=5)
-def calendar_upd():
+def calendar_upd(access_token=False):
+    print "Updating Calendar"
     caldata = dict()
     
     try:
-        access_token = session.get('access_token')
+        access_token = access_token or session.get('access_token')
         if access_token is None:
+            fill_calendar_cache({
+                'error': "Google Calendar Not Authorized",
+                'err_code': "not_authorized",
+                'err_note': "Visit /login to authorize"
+            })
             return False
-    
         access_token = access_token[0]
         
         caldata['daka_hours'] = query_gcal(access_token, '0cto0462lqrpt673m51bf1ucuk%40group.calendar.google.com')
-        if caldata['daka_hours'] == True: return False
+        if caldata['daka_hours'] == True: 
+            return False
         caldata['spoon_hours'] = query_gcal(access_token, 'ieqe1kvtb6narapqoafv59umog%40group.calendar.google.com')
 
         caldata['will'] = query_gcals(access_token, '488or1ai5vadl5psti3iq8ipgs%40group.calendar.google.com', # work
@@ -222,10 +203,7 @@ def calendar_upd():
             'a82i41iavlvd37d9fnrofklrms%40group.calendar.google.com', # WPI Schoolwork
             'ianonavy%40gmail.com')
     
-        print 'Updating calendar'
-        cache['calendar'] = caldata
-        cache['calendar_upd'] = time.time()
-        return True
+        fill_calendar_cache(caldata)
     except RuntimeError:
         with app.test_request_context('/update'):
             calendar_upd()
@@ -239,7 +217,14 @@ def retrieve_cached(name, since, getter):
 
     if 'data' not in cache[name]:
         if 'last_request' not in cache[name] or cache[name]['last_request'] + 5 < time.time():
-            getter()
+            # This is for google calendar, which tries its hardest to make my code break
+            if name is 'calendar':
+                args = [session.get('access_token')]
+            else:
+                args = []
+            # Force the function to run asynchronously
+            thr = threading.Thread(target=getter, args=args)
+            thr.start()
             cache[name]['last_request'] = time.time()
 
     if 'data' in cache[name] and ('last_update' not in cache[name] or cache[name]['last_update'] > since):
@@ -354,6 +339,10 @@ def time_btwn(datetime1, datetime2):
     elif minutes != 0: 
         strval += str(minutes)+' minutes '
     return strval.strip()
+    
+def fill_calendar_cache(data):    
+    cache['calendar']['data'] = data
+    cache['calendar']['last_update'] = time.time()
 
 ########
 # Init #
