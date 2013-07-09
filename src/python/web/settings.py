@@ -21,3 +21,7 @@ GOOGLE_CLIENT_SECRET = 'Nxv9OacMZK8LZQrT5y_V7RCU'
 GOOGLE_REDIRECT_URI = '/authorized'  # one of the Redirect URIs from Google APIs console
 GOOGLE_SECRET_KEY = 'AIzaSyAcpSlpgyTE2LbW8-RCmMvg3NYXWbPJK_s'
 CALENDAR_INTERVAL = 5*60
+
+# The delay between when requests are retried needs to be high because the Google Calendar stuff
+#   has about 15 separate requests to make which takes forever.
+RETRY_REQUEST_TIMEOUT = 20 # seconds

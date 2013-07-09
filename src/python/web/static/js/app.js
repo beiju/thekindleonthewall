@@ -1,16 +1,21 @@
-var thekindleonthewall = angular.module('thekindleonthewall', ['StateManager', 'be.poller', 'be.gadgets', 'skycons']);
+var thekindleonthewall = angular.module('thekindleonthewall', ['StateManager', 'be.poller', 'be.timekeeper', 'be.gadgets', 'skycons']);
 
 thekindleonthewall.constant('config', {
 	'autoTransitionDelay': 10000,
 	'pollInterval': 3000
 });
 
-thekindleonthewall.controller('MainController', function ($scope, $state, $stateParams, Poller, config) {
+thekindleonthewall.controller('MainController', function ($scope, $state, $stateParams, Poller, Timekeeper, config) {
     $scope.$state = $state;
     $scope.$stateParams = $stateParams;
     $scope.lastUpdate = 0;
     
     $scope.data = { 'initial' : true };
+    
+    $scope.mainTimer = {
+    	timezone: 'local',
+    	time: new Date(0)
+    }
     
     Poller
     	.attach($scope.data)
@@ -31,4 +36,7 @@ thekindleonthewall.controller('MainController', function ($scope, $state, $state
     		$scope.lastUpdate = Math.round(Date.now() / 1000); // Servers usually track time in seconds, not milliseconds
     	})
     	.start(config.pollInterval);
+    	
+    Timekeeper
+    	.attach($scope.mainTimer, 'local');
 });

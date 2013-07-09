@@ -24,8 +24,8 @@
 	</nav>
 	
 	<section ui-view="main"></section>
-	<h1>Data</h1>
-	<pre> {{ data | json }}</pre>
+	<h1>Data {{ mainTimer.time | date:'h:mm (Z)' }}</h1>
+	<pre>{{ data | json }}</pre>
 	
 	<script type="text/ng-template" id="personal-info.html">
 		<p>Personal Info</p>
@@ -83,6 +83,7 @@
 	<script type="text/javascript" src="components/skycons/skycons.js"></script>
 	<script type="text/javascript" src="js/gadgets.js"></script>
 	<script type="text/javascript" src="js/poller.js"></script>
+	<script type="text/javascript" src="js/timekeeper.js"></script>
 	<script type="text/javascript" src="js/states.js"></script>
 	<script type="text/javascript" src="js/skycons.js"></script>
 	<script type="text/javascript" src="js/app.js"></script>

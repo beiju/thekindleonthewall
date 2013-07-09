@@ -216,7 +216,7 @@ def retrieve_cached(name, since, getter):
     if name not in cache: cache[name] = dict()
 
     if 'data' not in cache[name]:
-        if 'last_request' not in cache[name] or cache[name]['last_request'] + 5 < time.time():
+        if 'last_request' not in cache[name] or cache[name]['last_request'] + RETRY_REQUEST_TIMEOUT < time.time():
             # This is for google calendar, which tries its hardest to make my code break
             if name is 'calendar':
                 args = [session.get('access_token')]

@@ -2,7 +2,7 @@ angular.module('skycons', [])
 	.directive('skyconsIcon', function() {
 		return {
 			'scope': { 
-				icon: '@skyconsIcon' 
+				icon: '@skyconsIcon' // I don't think this is even used
 			},
 			'link': function(scope, element, attrs) {
 				if (window.skycons == undefined) {
