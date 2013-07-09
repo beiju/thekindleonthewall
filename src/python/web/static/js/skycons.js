@@ -14,8 +14,8 @@ angular.module('skycons', [])
 			        if (typeof Skycons[iconFnName] === 'function') {
 			        	skycons.add(element[0], Skycons[iconFnName]);
 			        	skycons.play();
-			        } else {
-			        	console.warn("Skycon "+iconFnName+"was not found.");
+			        } else if (iconFnName !== '') {
+			        	console.warn("Skycon "+iconFnName+" was not found.");
 			        }
 			    });
 			}
