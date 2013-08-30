@@ -1,7 +1,7 @@
 from flask import Flask, request, g, render_template, redirect, url_for, session, jsonify, json
 from apscheduler.scheduler import Scheduler
 from flask_oauth import OAuth
-from forecastio import *
+import requests
 import room_controller.arduino
 import time
 import pytz
@@ -16,8 +16,6 @@ logging.basicConfig() # used by apscheduler
 sched = Scheduler()
 sched.start()
 app.secret_key = GOOGLE_SECRET_KEY
-
-forecast = Forecastio(FORECAST_API)
 
 oauth = OAuth()
 google = oauth.remote_app('google',
@@ -81,7 +79,8 @@ def clearCache():
     
 @app.route('/login')
 def login():
-    cache['calendar']['data']['err_code'] = "pending_authorization" # Avoid endless redirects
+    if cache and 'calendar' in cache and 'data' in cache['calendar']:
+        cache['calendar']['data']['err_code'] = "pending_authorization" # Avoid endless redirects
     callback=url_for('authorized', _external=True)
     return google.authorize(callback=callback)
 
@@ -129,38 +128,49 @@ def refresh_arduino():
 @sched.interval_schedule(minutes=5)
 def forecast_upd():
     print "Updating forecast"
-    forecast.load_forecast(FORECAST_LAT, FORECAST_LONG, units=FORECAST_UNITS)
-
-    currently = forecast.get_currently()
-    minutely = forecast.get_minutely()
-    hourly = forecast.get_hourly()
-    daily = forecast.get_daily()
-    data = {
-        'current': {
-            'icon': currently.icon,
-            'description': currently.summary,
-            'temperature': {
-                'c': currently.temperature,
-                'f': currently.temperature * 9 / 5 + 32
-            },
-            'wind': {
-                'speed': currently.windspeed,
-                'angle': currently.windbaring # Typo in the library
-            }
-        },
-        'next_hr': {
-            'icon': minutely.icon,
-            'description': minutely.summary
-        },
-        'tomorrow': {
-            'icon': hourly.icon,
-            'description': hourly.summary
-        },
-        'this_week': {
-            'icon': daily.icon,
-            'description': daily.summary
-        }
-    }
+    
+    forecast = requests.get('https://api.forecast.io/forecast/'+FORECAST_API+'/'+FORECAST_LAT+','+FORECAST_LONG, params = {
+        'units': FORECAST_UNITS,
+        'exclude': 'flags'
+    })
+    
+    data = forecast.json()
+    
+    for key in ['minutely', 'hourly', 'daily']:
+        if key in data and 'data' in data[key]: del data[key]['data']
+    
+    # forecast.load_forecast(FORECAST_LAT, FORECAST_LONG, units=FORECAST_UNITS)
+# 
+#     currently = forecast.get_currently()
+#     minutely = forecast.get_minutely()
+#     hourly = forecast.get_hourly()
+#     daily = forecast.get_daily()
+#     data = {
+#         'current': {
+#             'icon': currently.icon,
+#             'description': currently.summary,
+#             'temperature': {
+#                 'c': currently.temperature,
+#                 'f': currently.temperature * 9 / 5 + 32
+#             },
+#             'wind': {
+#                 'speed': currently.windspeed,
+#                 'angle': currently.windbaring # Typo in the library
+#             }
+#         },
+#         'next_hr': {
+#             'icon': minutely.icon,
+#             'description': minutely.summary
+#         },
+#         'tomorrow': {
+#             'icon': hourly.icon,
+#             'description': hourly.summary
+#         },
+#         'this_week': {
+#             'icon': daily.icon,
+#             'description': daily.summary
+#         }
+#     }
 
     if 'weather' not in cache: cache['weather'] = dict()
     cache['weather']['data'] = data
@@ -298,27 +308,31 @@ def query_gcal(access_token, calID):
         if 'current' not in data: # Look for the current event
             if startTime < now and endTime > now:
                 data['current'] = {
-                    'start_time': str(startTime),
-                    'end_time': str(endTime),
+                    'exists': True,
+                    'start_time': startTime.isoformat(),
+                    'end_time': endTime.isoformat(),
                     'duration': time_btwn(startTime, endTime),
                     'remaining_time': time_btwn(now, endTime),
-                    'event_name': item['summary']
                 }
                 if 'location' in item:
                     data['current']['event_loc'] = item['location']
+                if 'summary' in item:
+                    data['current']['event_name'] = item['summary']
 
         if 'next' not in data:
             if startTime > now: # The first event for which startTime is after now is 'next', since events are ordered by startTime
                 data['next'] = {
-                    'start_time': str(startTime),
-                    'end_time': str(endTime),
+                    'exists': True,
+                    'start_time': startTime.isoformat(),
+                    'end_time': endTime.isoformat(),
                     'duration': time_btwn(startTime, endTime),
                     'time_until': time_btwn(startTime, now),
-                    'event_name': item['summary'],
                     'continuation': 'current' in data and (abs(startTime - parse(data['current']['end_time'])) < datetime.timedelta(minutes=5))
                 }
                 if 'location' in item:
                     data['next']['event_loc'] = item['location']
+                if 'summary' in item:
+                    data['next']['event_name'] = item['summary']
                 
                 
     if 'current' not in data:

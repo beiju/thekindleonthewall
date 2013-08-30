@@ -1,0 +1,108 @@
+body {
+	margin: 0;
+	padding: 0;
+	width: 600px;
+	height: 800px;
+	outline: 1px solid black;
+	font: 16px "Helvetica Neue LT", "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+}
+
+[ng-cloak] {
+	visibility: hidden;
+}
+
+/* @group Time */
+
+#time {
+	height: 150px;
+	padding: 1px;
+}
+
+#time .meridian {
+	font-size: .5em;
+	font-weight: bold;
+	color: #666;
+	padding: 0 0.2em;
+}
+
+#time .local {
+	font-size: 7em;
+	line-height: 150px;
+	margin: 0;
+	width: 65%;
+	text-align: center;
+	font-weight: normal;
+	display: inline-block;
+}
+
+#time .remote {
+	display: inline-block;
+	vertical-align: 60%;
+	width: 33%;
+	padding-right: 2%;
+	text-align: center;
+}
+	.kindle #time .remote {
+		vertical-align: 15%;
+	}
+
+#time .remote .location {
+	font-size: 1.5em;
+	margin: 0;
+	/*font-weight: normal;*/
+	color: #888;
+}
+
+#time .remote .time {
+	font-size: 3em;
+	line-height: 1;
+	font-weight: normal;
+	margin: 0;
+}
+
+/* @end */
+
+#nav {
+	display: -webkit-box;
+	border-right: 1px solid #333;
+}
+
+#nav > div {
+	-webkit-box-flex: 1;
+	width: 40px;
+	text-align: center;
+	border-top: 1px solid #333;
+	border-left: 1px solid #333;
+}
+
+#nav a, #nav label {
+	display: block;
+	height: 50px;
+	line-height: 50px;
+	border-bottom: 1px solid #333;
+	cursor: pointer;
+	font-size: 1.5em;
+	color: inherit;
+	text-decoration: none;
+}
+
+#nav a:active, #nav label:active {
+	background: #ddd;
+}
+
+#nav a.on, #nav label.on {
+	background: #ccc;
+}
+
+#nav a.on:active, #nav label.on:active {
+	background: #aaa;
+}
+
+#nav input {
+	display: none;
+}
+
+#nav svg {
+	display: inline-block;
+	vertical-align: -20%;
+}

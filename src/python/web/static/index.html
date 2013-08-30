@@ -9,69 +9,112 @@
 	
 	<link rel="stylesheet" href="style.css" />
 </head>
-<body ng-app="thekindleonthewall" ng-controller="MainController">
-	<nav id="tabs">
-		<div class="routes" ng-controller="StateController">
-			<label><input type="checkbox" name="auto" ng-model="auto" />Auto</label>
-			<a href="#/personal-info">Personal Info</a>
-			<a href="#/general-info">General Info</a>
-		</div>
+<body ng-app="thekindleonthewall" ng-controller="MainController" ng-class="{'kindle': config.isKindle}">
+	<!--
+		Icon credit to:
+			
+			TWG, for the other stock icons. http://blog.twg.ca/2010/11/retina-display-icon-set/
+	-->
+	<section id="time" ng-cloak>
+		<h1 ng-show="mainTimer.time" class="time local">{{ mainTimer.time | date:'h:mm' }}<span class="meridian">{{ mainTimer.time | date:'a' }}</span></h1><!-- Hide whitespace so inline-block behaves itself
+		--><aside class="remote" ng-show="offsetTimer.time">
+			<h2 class="location">{{ offsetTimer.label }}</h2>
+			<h1 class="time">{{ offsetTimer.time | date:'h:mm' }}<span class="meridian">{{ offsetTimer.time | date:'a' }}</span></h1>
+		</aside>
+	</section>
+	
+	<nav id="nav">
 		<div class="gadgets" ng-controller="GadgetsController">
 			<a be-gadget="lights[0]">Light 1</a>
 			<a be-gadget="lights[1]">Light 2</a>
 			<a be-gadget="fan">Fan</a>
 		</div>
+		<div class="routes" ng-controller="StateController">
+			<label ng-class="{'on': auto}"><input type="checkbox" name="auto" ng-model="auto" />Auto <span be-gauge size="40" stroke-width="8" stroke="#555" value="{{nextSwitchTimer}}" max="{{config.autoTransitionDelay}}"></span></label>
+			<a href="#/personal-info" ng-class="{'on': $state.current.name == 'personal-info'}">Personal Info</a>
+			<a href="#/general-info" ng-class="{'on': $state.current.name == 'general-info'}">General Info</a>
+		</div>
+		<div class="location">
+			<a id="mass">01609</a>
+			<a id="ca">91423</a>
+		</div>
 	</nav>
 	
 	<section ui-view="main"></section>
-	<h1>Data {{ mainTimer.time | date:'h:mm (Z)' }}</h1>
-	<pre>{{ data | json }}</pre>
-	
+
 	<script type="text/ng-template" id="personal-info.html">
-		<p>Personal Info</p>
+		<section id="dining" ng-show="data.calendar">
+			<div id="{{key}}" ng-repeat="(key, location) in {'daka_hours': 'DAKA', 'spoon_hours': 'Spoon'}">
+				<h1>{{location}}:</h1>
+				<p ng-show="data.calendar[key].current.exists">
+					<span class="open">Open.</span>
+					<span class="next_event_time">{{ data.calendar[key].current.remaining_time }}</span>
+					until
+					<span class="next_event" ng-show="data.calendar[key].next.continuation">{{ data.calendar[key].next.event_name }}.</span>
+					<span class="next_event" ng-hide="data.calendar[key].next.continuation">closing.</span>
+				<p>
+				<p ng-hide="data.calendar[key].current.exists">
+					<span class="closed">Closed.</span>
+					<span class="next_event_time">{{ data.calendar[key].next.time_until }}</span>
+					until
+					<span class="next_event">{{ data.calendar[key].next.event_name }}.</span>
+				<p>
+			</div>
+		</section>
+		<section id="{{person}}" ng-repeat="(person, name) in {'will': 'Will', 'ian': 'Ian' }">
+			<h1>{{name}}</h1>
+			<section class="now" ng-show="data.calendar[person].current.exists">
+				<h1>Now:</h1>
+				<p class="title" ng-show="data.calendar[person].current.event_name">{{ data.calendar[person].current.event_name }}</p>
+				<p class="title unknown" ng-hide="data.calendar[person].current.event_name">Unknown Event</p>
+				<p class="location" ng-show="data.calendar[person].current.event_loc">{{ data.calendar[person].current.event_loc }}</p>
+				<p class="location unknown" ng-hide="data.calendar[person].current.event_loc">Location Unknown</p>
+			</section>
+			<section class="next" ng-show="data.calendar[person].next.exists">
+				<h1>{{ data.calendar[person].next.time_until }}</h1>
+				<p class="title" ng-show="data.calendar[person].next.event_name">{{ data.calendar[person].next.event_name }}</p>
+				<p class="title unknown" ng-hide="data.calendar[person].next.event_name">Unknown Event</p>
+				<p class="location" ng-show="data.calendar[person].next.event_loc">{{ data.calendar[person].next.event_loc }}</p>
+				<p class="location unknown" ng-hide="data.calendar[person].next.event_loc">Location Unknown</p>
+			</section>
+		</section>
 	</script>
 	
 	<script type="text/ng-template" id="general-info.html">
-	    <section id="time" ng-show="times">
-	    	<h1 class="time local">{{ times.local }}</h1>
-	    	<aside class="remote">
-	    		<h2 class="location">{{ times.remote_label }}</h2>
-	    		<h1 class="time">{{ times.remote }}</h1>
-	    	</aside>
-	    </section>
-	    
 	    <section id="weather" ng-show="data.weather">
-	    	<section id="weather-warning" ng-show="{{ data.weather.warnings }}">
-	    		<img class="icon" <!--src="img/weather-warning.png"--> />
-	    		<h1 class="warning">{{ data.weather.warnings.warning }}</h1>
+	    	<section id="weather-alerts" ng-show="data.weather.alerts">
+	    		<div class="alert" ng-repeat="alert in data.weather.alerts">
+		    		<img class="icon" src="stock/warning1_64.png" width="64" height="64" />
+		    		<h1 class="warning">{{ alert.title }}</h1>
+		    	</div>
 	    	</section>
 	    	<section id="now">
 	    		<!-- TODO: Width and height -->
-	    		<canvas skycons-icon="{{ data.weather.current.icon }}" height="" width=""></canvas>
-	    		<p class="description">{{ data.weather.current.description }}</p>
+	    		<canvas skycons-icon="{{ data.weather.currently.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.currently.description }}</p>
 	    		<p class="temp">
-	    			<span class="farenheit">{{ data.weather.current.temperature.c }}</span>
+	    			<span class="farenheit">{{ data.weather.currently.temperature }}</span>
 	    			<span class="units">&deg;C</span> / 
-	    			<span class="celsuis">{{ data.weather.current.temperature.f }}</span>
+	    			<span class="celsuis">{{ data.weather.currently.temperature * 9/5 + 32 }}</span>
 	    			<span class="units">&deg;F</span>
 	    		</p>
 	    		<p class="wind">
-	    			<span style="-webkit-transform: rotate(-{{ data.weather.current.wind.angle }}deg)">&#10146;</span>
-	    			<span class="speed">{{ data.weather.current.wind.speed }}</span>
+	    			<span style="-webkit-transform: rotate(-{{ data.weather.currently.windBearing }}deg)">&#10146;</span>
+	    			<span class="speed">{{ data.weather.currently.windSpeed }}</span>
 	    			<span class="units">mph</span>
 	    		</p>
 	    	</section>
 	    	<section id="later">
 	    		<!-- TODO: Width and height -->
 	    		<h1>Next Hour</h1>
-	    		<canvas skycons-icon="{{ data.weather.next_hr.icon }}" height="" width=""></canvas>
-	    		<p class="description">{{ data.weather.next_hr.description }}</p>
-	    		<h1>Tomorrow</h1>
-	    		<canvas skycons-icon="{{ data.weather.tomorrow.icon }}" height="" width=""></canvas>
-	    		<p class="description">{{ data.weather.tomorrow.description }}</p>
-	    		<h1>This Week</h1>
-	    		<canvas skycons-icon="{{ data.weather.this_week.icon }}" height="" width=""></canvas>
-	    		<p class="description">{{ data.weather.this_week.description }}</p>
+	    		<canvas skycons-icon="{{ data.weather.minutely.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.minutely.summary }}</p>
+	    		<h1>Next Day</h1>
+	    		<canvas skycons-icon="{{ data.weather.hourly.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.hourly.summary }}</p>
+	    		<h1>Next Week</h1>
+	    		<canvas skycons-icon="{{ data.weather.daily.icon }}" height="" width=""></canvas>
+	    		<p class="description">{{ data.weather.daily.summary }}</p>
 	    	</section>
 	    </section>
 	    
@@ -84,6 +127,7 @@
 	<script type="text/javascript" src="js/gadgets.js"></script>
 	<script type="text/javascript" src="js/poller.js"></script>
 	<script type="text/javascript" src="js/timekeeper.js"></script>
+	<script type="text/javascript" src="js/gauge.js"></script>
 	<script type="text/javascript" src="js/states.js"></script>
 	<script type="text/javascript" src="js/skycons.js"></script>
 	<script type="text/javascript" src="js/app.js"></script>
