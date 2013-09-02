@@ -2,7 +2,7 @@ from flask import Flask, request, g, render_template, redirect, url_for, session
 from apscheduler.scheduler import Scheduler
 from flask_oauth import OAuth
 import requests
-import room_controller.arduino
+import arduino
 import time
 import pytz
 import datetime
@@ -30,7 +30,7 @@ google = oauth.remote_app('google',
                           consumer_key=GOOGLE_CLIENT_ID,
                           consumer_secret=GOOGLE_CLIENT_SECRET)
 
-the_arduino = room_controller.arduino.Arduino(SIGNATURE, FILENAME, BAUD, TIMEOUT)
+the_arduino = arduino.Arduino(SIGNATURE, FILENAME, BAUD, TIMEOUT)
 cache = dict()
 print "Flask imported"
 if the_arduino.connected:
